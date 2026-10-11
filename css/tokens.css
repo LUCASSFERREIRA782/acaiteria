@@ -1,0 +1,83 @@
+/**
+ * tokens.css — Design System "Polpa"
+ * -------------------------------------------------------
+ * Identidade de feira/comanda: papel creme, tinta de açaí,
+ * bordas grossas e sombras "carimbadas" (deslocadas, sem
+ * desfoque). Nada de gradiente roxo nem vidro fosco.
+ *
+ * Regra: nenhum outro arquivo usa cor/medida literal — só
+ * estes tokens. Para mudar a marca, edite apenas aqui.
+ * -------------------------------------------------------
+ */
+
+:root {
+  /* ---- Cor: base ---- */
+  --ink:        #2A0B24;   /* açaí puro — texto, bordas, fundos fortes */
+  --ink-soft:   #5A3A52;   /* texto secundário */
+  --polpa:      #6B1A52;   /* açaí batido — superfícies de marca */
+  --paper:      #F5EEE2;   /* fundo principal (papel de comanda) */
+  --paper-deep: #EADFCB;   /* faixas e campos */
+  --white:      #FFFDF8;   /* cartões */
+
+  /* ---- Cor: acentos (frutas) ---- */
+  --banana:     #F3C13A;   /* destaque, preço, CTA secundário */
+  --morango:    #E2483D;   /* alerta, indisponível, cancelar */
+  --folha:      #3D6B47;   /* sucesso, aberto, pago */
+  --coco:       #FBF6EC;   /* texto sobre fundos escuros */
+
+  /* ---- Tipografia ---- */
+  --font-display: "Bagel Fat One", "Arial Black", system-ui, sans-serif;
+  --font-body:    "Familjen Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono:    "DM Mono", ui-monospace, "Cascadia Mono", monospace;
+
+  --fs-xs:   0.75rem;
+  --fs-sm:   0.875rem;
+  --fs-md:   1rem;
+  --fs-lg:   1.1875rem;
+  --fs-xl:   1.5rem;
+  --fs-2xl:  2rem;
+  --fs-hero: clamp(2.6rem, 9vw, 4.75rem);
+
+  /* ---- Espaço (escala de 4) ---- */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 20px;
+  --s-6: 24px;
+  --s-8: 32px;
+  --s-10: 40px;
+  --s-12: 48px;
+
+  /* ---- Forma ---- */
+  --line: 2px solid var(--ink);
+  --line-thin: 1.5px dashed color-mix(in srgb, var(--ink) 35%, transparent);
+  --r-sm: 10px;
+  --r-md: 16px;
+  --r-lg: 24px;
+  --r-pill: 999px;
+  --r-blob: 42% 58% 55% 45% / 48% 42% 58% 52%; /* fotos em formato de gota */
+
+  /* ---- Sombras carimbadas ---- */
+  --stamp-sm: 2px 2px 0 var(--ink);
+  --stamp:    4px 4px 0 var(--ink);
+  --stamp-lg: 6px 6px 0 var(--ink);
+
+  /* ---- Movimento ---- */
+  --ease-squish: cubic-bezier(.34, 1.56, .64, 1);
+  --t-fast: 120ms;
+  --t-mid: 240ms;
+
+  /* ---- Ilustração padrão (produto sem foto) ---- */
+  --img-fallback: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M66 8 55 38' stroke='%232A0B24' stroke-width='5' stroke-linecap='round'/%3E%3Cpath d='M22 46c0-15 12-24 28-24s28 9 28 24z' fill='%236B1A52' stroke='%232A0B24' stroke-width='3'/%3E%3Ccircle cx='38' cy='34' r='6' fill='%23F3C13A' stroke='%232A0B24' stroke-width='2.5'/%3E%3Ccircle cx='54' cy='30' r='4' fill='%23F3C13A' stroke='%232A0B24' stroke-width='2.5'/%3E%3Ccircle cx='64' cy='38' r='2' fill='%23FBF6EC'/%3E%3Ccircle cx='47' cy='40' r='2' fill='%23FBF6EC'/%3E%3Cpath d='M26 46h48l-7 40a5 5 0 0 1-5 4H38a5 5 0 0 1-5-4z' fill='%232A0B24'/%3E%3Cpath d='M31 60h38' stroke='%23F3C13A' stroke-width='3'/%3E%3C/svg%3E");
+
+  /* ---- Layout ---- */
+  --page-max: 1080px;
+  --gutter: 16px;
+  --header-h: 60px;
+  --nav-h: 56px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --t-fast: 0ms; --t-mid: 0ms; }
+}

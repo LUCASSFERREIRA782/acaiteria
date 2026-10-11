@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QR Code do Cardápio</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Familjen+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/tokens.css">
+<style>
+  *{ box-sizing:border-box; }
+  body{
+    font-family:var(--font-body); background:var(--ink); color:var(--ink);
+    display:flex; align-items:center; justify-content:center; min-height:100vh; margin:0; padding:24px;
+  }
+  .panel{ width:100%; max-width:380px; text-align:center; background:var(--paper); border:var(--line); border-radius:var(--r-lg); padding:var(--s-8) var(--s-6); box-shadow:6px 6px 0 var(--banana); }
+  h1{ font-family:var(--font-display); font-weight:400; font-size:var(--fs-2xl); line-height:1; margin:0 0 var(--s-2); }
+  p.hint{ color:var(--ink-soft); font-size:var(--fs-sm); margin-bottom:var(--s-5); }
+  input{
+    width:100%; padding:11px 12px; border-radius:var(--r-sm); border:var(--line);
+    background:var(--white); color:var(--ink); font:inherit; margin-bottom:var(--s-3);
+  }
+  input:focus{ outline:none; box-shadow:3px 3px 0 var(--banana); }
+  label{ display:block; text-align:left; font-size:var(--fs-xs); text-transform:uppercase; letter-spacing:.06em; margin-bottom:6px; }
+  button{
+    width:100%; padding:13px; border:var(--line); border-radius:var(--r-md); font:inherit; font-weight:700;
+    cursor:pointer; margin-top:6px; box-shadow:var(--stamp-sm);
+  }
+  #generate-btn{ background:var(--banana); color:var(--ink); }
+  #print-btn{ background:transparent; color:var(--ink); margin-top:10px; display:none; box-shadow:none; }
+
+  #qr-output{ margin:24px auto 8px; display:flex; justify-content:center; }
+  #qr-output canvas, #qr-output img{ border:var(--line); border-radius:var(--r-sm); padding:8px; background:#fff; }
+  #qr-label{ font-family:var(--font-display); font-size:var(--fs-lg); margin-top:8px; display:none; }
+
+  @media print{
+    body{ background:#fff; color:#000; align-items:flex-start; }
+    .panel{ max-width:none; border:0; box-shadow:none; background:#fff; }
+    .no-print{ display:none !important; }
+    #qr-output{ margin-top:40px; }
+    #qr-output canvas, #qr-output img{ width:6cm !important; height:6cm !important; }
+    #qr-label{ display:block !important; color:#000; font-size:1.1rem; margin-top:16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="panel">
+  <div class="no-print">
+    <h1>Gerador de QR Code</h1>
+    <p class="hint">Cole a URL onde o cardápio está publicado e gere o QR para imprimir nas mesas e no balcão.</p>
+
+    <label for="url-input">URL do cardápio publicado</label>
+    <input id="url-input" type="url" placeholder="https://suaacaiteria.com.br/">
+
+    <label for="label-input">Texto abaixo do QR (opcional)</label>
+    <input id="label-input" type="text" placeholder="Aponte a câmera para ver o cardápio">
+
+    <button id="generate-btn">Gerar QR Code</button>
+    <button id="print-btn">Imprimir</button>
+  </div>
+
+  <div id="qr-output"></div>
+  <div id="qr-label"></div>
+</div>
+
+<script>
+  const urlInput = document.getElementById("url-input");
+  const labelInput = document.getElementById("label-input");
+  const output = document.getElementById("qr-output");
+  const labelEl = document.getElementById("qr-label");
+  const printBtn = document.getElementById("print-btn");
+
+  document.getElementById("generate-btn").addEventListener("click", () => {
+    const url = urlInput.value.trim();
+    if (!url) {
+      alert("Cole a URL do cardápio antes de gerar o QR.");
+      return;
+    }
+
+    output.innerHTML = "";
+    // Alto contraste (preto sobre branco) e correção de erro alta —
+    // funciona melhor impresso em qualidade variável de impressora.
+    new QRCode(output, {
+      text: url,
+      width: 260,
+      height: 260,
+      colorDark: "#000000",
+      colorLight: "#ffffff",
+      correctLevel: QRCode.CorrectLevel.H,
+    });
+
+    labelEl.textContent = labelInput.value.trim();
+    labelEl.style.display = labelInput.value.trim() ? "block" : "none";
+    printBtn.style.display = "block";
+  });
+
+  printBtn.addEventListener("click", () => window.print());
+</script>
+</body>
+</html>

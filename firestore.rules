@@ -1,0 +1,96 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---- Helpers ----
+    function isAdmin() {
+      return request.auth != null && request.auth.token.admin == true;
+    }
+    function isText(v, max) {
+      return v is string && v.size() <= max;
+    }
+    function isMoney(v) {
+      return (v is int || v is float) && v >= 0 && v <= 10000;
+    }
+
+    // Item da comanda: só estes campos, tamanhos limitados.
+    function validItem(i) {
+      return i is map
+        && i.keys().hasOnly(['nome', 'tamanho', 'adicionais', 'obs', 'qtd', 'unit'])
+        && isText(i.nome, 80) && isText(i.tamanho, 30) && isText(i.obs, 120)
+        && i.adicionais is list && i.adicionais.size() <= 20
+        && i.qtd is int && i.qtd >= 1 && i.qtd <= 20
+        && isMoney(i.unit);
+    }
+
+    // Pedido novo vindo do site. hasOnly() impede gravar qualquer
+    // outro dado (endereço, telefone, CPF, cartão…) mesmo que alguém
+    // altere o JavaScript do site.
+    function validNewOrder(d) {
+      return d.keys().hasOnly(['codigo', 'modo', 'pagamento', 'apelido', 'mesa', 'bairro',
+                               'itens', 'subtotal', 'taxaEntrega', 'total', 'status', 'pago', 'criadoEm'])
+        && d.codigo is string && d.codigo.matches('^[A-Z0-9]{4}$')
+        && (
+             (d.modo == 'local'   && d.pagamento in ['caixa_cartao', 'caixa_pix'] && d.bairro == '')
+          || (d.modo == 'entrega' && d.pagamento in ['pix', 'maquininha']        && d.mesa == '')
+        )
+        && isText(d.apelido, 30) && d.apelido.size() >= 2
+        && isText(d.mesa, 10) && isText(d.bairro, 40)
+        && d.itens is list && d.itens.size() >= 1 && d.itens.size() <= 10
+        && validItem(d.itens[0])
+        && (d.itens.size() < 2  || validItem(d.itens[1]))
+        && (d.itens.size() < 3  || validItem(d.itens[2]))
+        && (d.itens.size() < 4  || validItem(d.itens[3]))
+        && (d.itens.size() < 5  || validItem(d.itens[4]))
+        && (d.itens.size() < 6  || validItem(d.itens[5]))
+        && (d.itens.size() < 7  || validItem(d.itens[6]))
+        && (d.itens.size() < 8  || validItem(d.itens[7]))
+        && (d.itens.size() < 9  || validItem(d.itens[8]))
+        && (d.itens.size() < 10 || validItem(d.itens[9]))
+        && isMoney(d.subtotal) && isMoney(d.taxaEntrega) && isMoney(d.total)
+        && d.status == 'novo'
+        && d.pago == false
+        && d.criadoEm == request.time;
+    }
+
+    // ---- Cardápio e configurações: leitura pública, escrita só admin ----
+    match /config/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /categorias/{catId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /produtos/{prodId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ---- Pedidos ----
+    match /pedidos/{orderId} {
+      allow create: if validNewOrder(request.resource.data);
+      // O cliente acompanha o próprio pedido pelo ID (aleatório, 20 caracteres).
+      // "get" ≠ "list": ninguém consegue listar os pedidos dos outros.
+      allow get: if true;
+      allow list, update, delete: if isAdmin();
+    }
+
+    // ---- Legado: transações antigas (podem conter endereço). Só o admin
+    //      lê e apaga; ninguém mais grava. Apague-as pelo painel. ----
+    match /transacoes/{orderId} {
+      allow read, delete: if isAdmin();
+      allow create, update: if false;
+    }
+    match /emails/{emailId} {
+      allow read, delete: if isAdmin();
+      allow create, update: if false;
+    }
+
+    // ---- Administradores ----
+    match /admins/{uid} {
+      allow read: if isAdmin();
+      allow write: if false; // só via Cloud Function (Admin SDK)
+    }
+  }
+}

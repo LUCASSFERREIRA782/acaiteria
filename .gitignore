@@ -1,0 +1,17 @@
+.DS_Store
+Thumbs.db
+node_modules/
+
+# Segredos — NUNCA versionar
+scripts/service-account.json
+*service-account*.json
+functions/.env
+.env
+
+# Firebase / ferramentas locais
+.firebase/
+.claude/
+
+# Fora deste repositório
+Digital-Menu/
+_legado/

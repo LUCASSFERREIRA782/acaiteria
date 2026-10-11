@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Roxo da Vila — Açaiteria</title>
+<meta name="description" content="Cardápio digital da açaiteria.">
+<meta name="theme-color" content="#2A0B24">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+
+<meta property="og:title" content="Roxo da Vila — Açaiteria">
+<meta property="og:description" content="Açaí batido na hora, do seu jeito. Peça para entrega ou consuma aqui.">
+<meta property="og:type" content="website">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=DM+Mono:wght@400;500&family=Familjen+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/style.css">
+
+<!-- Firebase SDKs (compat) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+</head>
+<body>
+
+<a class="skip-link" href="#cardapio">Pular para o cardápio</a>
+
+<!-- ========== TOPO ========== -->
+<header class="topbar">
+  <div class="topbar-inner">
+    <a href="#" class="brand" aria-label="Início">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 40 40"><circle cx="20" cy="22" r="15" fill="currentColor"/><path d="M14 9c2-4 8-5 11-2" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="15" cy="19" r="3" fill="var(--coco)" opacity=".85"/></svg>
+      </span>
+      <span class="brand-name" data-brand-name>Roxo da Vila</span>
+    </a>
+    <span class="open-sticker" data-open-status hidden></span>
+  </div>
+</header>
+
+<!-- ========== HERO ========== -->
+<section class="hero">
+  <div class="hero-inner">
+    <p class="hero-kicker" data-slogan>Açaí batido na hora</p>
+    <h1 class="hero-title">Monte o seu <em>copo</em> do jeito que você gosta.</h1>
+    <ul class="hero-tags" aria-label="Como funciona">
+      <li class="tag tag--banana">Entrega no bairro</li>
+      <li class="tag tag--coco">Consuma aqui</li>
+      <li class="tag tag--outline">Pix ou cartão</li>
+    </ul>
+  </div>
+  <svg class="hero-drip" viewBox="0 0 1200 60" preserveAspectRatio="none" aria-hidden="true">
+    <path d="M0 0h1200v18c-40 0-52 34-80 34s-30-26-62-26-38 40-74 40-40-30-70-30-34 16-64 16-44-34-84-34-30 22-60 22-44-28-90-28-34 36-70 36-38-20-66-20-46 30-86 30S302 22 262 22s-34 30-70 30-40-34-78-34S70 40 40 40 12 18 0 18z" fill="var(--ink)"/>
+  </svg>
+</section>
+
+<!-- ========== NAV DE CATEGORIAS ========== -->
+<nav class="cat-nav" id="category-nav" aria-label="Categorias do cardápio">
+  <div class="cat-nav-track"></div>
+</nav>
+
+<main id="cardapio">
+  <section class="featured" id="destaques" hidden>
+    <h2 class="section-title"><span>Os queridinhos</span></h2>
+    <div class="featured-track"></div>
+  </section>
+
+  <div id="menu-categories" aria-live="polite">
+    <div class="loading-blob" role="status"><span></span>Batendo o açaí…</div>
+  </div>
+
+  <!-- ========== INFORMAÇÕES ========== -->
+  <section class="info" id="info">
+    <h2 class="section-title"><span>Onde estamos</span></h2>
+    <div class="info-grid">
+      <div class="info-card">
+        <h3>Endereço</h3>
+        <p data-address></p>
+      </div>
+      <div class="info-card">
+        <h3>Horários</h3>
+        <dl class="hours" data-hours-list></dl>
+      </div>
+      <div class="info-card info-card--ink">
+        <h3>Como pagar</h3>
+        <p><strong>Entrega:</strong> Pix ou maquininha na porta.</p>
+        <p><strong>Aqui na loja:</strong> cartão ou Pix direto no caixa.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <span class="footer-brand" data-brand-name>Roxo da Vila</span>
+  <nav class="footer-links" aria-label="Contato">
+    <a href="#" data-whats-link target="_blank" rel="noopener">WhatsApp</a>
+    <a href="#" data-instagram-link target="_blank" rel="noopener">Instagram</a>
+  </nav>
+  <p class="fine">Não guardamos endereço, telefone nem dados de pagamento. Preços sujeitos a alteração.</p>
+</footer>
+
+<!-- ========== BARRA DO PEDIDO ========== -->
+<div class="order-bar" id="order-bar" aria-live="polite"></div>
+
+<!-- ========== SHEET (produto / comanda / confirmação) ========== -->
+<div class="sheet-overlay" id="sheet-overlay" aria-hidden="true">
+  <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Detalhes" tabindex="-1"></div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="js/config.js"></script>
+<script src="data/menu.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/catalog.js"></script>
+<script src="js/cart.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/checkout.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#2A0B24">
+<title>Painel — Açaiteria</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=DM+Mono:wght@400;500&family=Familjen+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/tokens.css">
+<link rel="stylesheet" href="../css/admin.css">
+</head>
+<body>
+
+<!-- ===== LOGIN ===== -->
+<section id="login-screen" class="login" hidden>
+  <form class="login-card" id="login-form">
+    <span class="login-kicker">Painel da loja</span>
+    <h1 data-brand-name>Açaiteria</h1>
+    <label class="f-label" for="email">E-mail</label>
+    <input class="f-input" id="email" type="email" autocomplete="username" required>
+    <label class="f-label" for="password">Senha</label>
+    <input class="f-input" id="password" type="password" autocomplete="current-password" required>
+    <button type="submit" class="a-btn a-btn--ink a-btn--block" id="login-btn">Entrar</button>
+    <p id="login-error" class="a-error" role="alert"></p>
+  </form>
+</section>
+
+<!-- ===== PAINEL ===== -->
+<section id="admin-panel" hidden>
+  <header class="a-header">
+    <div class="a-brand">
+      <span class="a-brand-dot" aria-hidden="true"></span>
+      <span data-brand-name>Açaiteria</span>
+    </div>
+    <nav class="a-tabs" role="tablist">
+      <button class="a-tab is-active" data-tab="pedidos" role="tab">Pedidos <span class="a-count" id="new-count" hidden></span></button>
+      <button class="a-tab" data-tab="cardapio" role="tab">Cardápio</button>
+      <button class="a-tab" data-tab="adicionais" role="tab">Adicionais</button>
+      <button class="a-tab" data-tab="entrega" role="tab">Entrega</button>
+      <button class="a-tab" data-tab="ajustes" role="tab">Equipe e dados</button>
+    </nav>
+    <button id="logout-btn" class="a-btn a-btn--ghost a-btn--sm">Sair</button>
+  </header>
+
+  <!-- ABA: PEDIDOS -->
+  <div class="a-pane is-active" id="tab-pedidos">
+    <div class="a-toolbar">
+      <h2>Pedidos de hoje</h2>
+      <div class="a-toolbar-right">
+        <label class="a-switch"><input type="checkbox" id="sound-toggle" checked><span>Som de novo pedido</span></label>
+        <select class="f-input f-input--sm" id="orders-range">
+          <option value="hoje">Hoje</option>
+          <option value="7">Últimos 7 dias</option>
+        </select>
+      </div>
+    </div>
+    <div class="board" id="orders-board">
+      <section class="board-col" data-col="novo"><h3>Novos</h3><div class="board-list"></div></section>
+      <section class="board-col" data-col="preparo"><h3>Preparando</h3><div class="board-list"></div></section>
+      <section class="board-col" data-col="pronto"><h3>Pronto · Saiu</h3><div class="board-list"></div></section>
+      <section class="board-col board-col--done" data-col="fim"><h3>Finalizados</h3><div class="board-list"></div></section>
+    </div>
+    <p class="a-summary" id="orders-summary"></p>
+  </div>
+
+  <!-- ABA: CARDÁPIO -->
+  <div class="a-pane" id="tab-cardapio">
+    <div class="a-toolbar">
+      <h2>Cardápio</h2>
+      <div class="a-toolbar-right">
+        <button id="new-category-btn" class="a-btn a-btn--sm">+ Categoria</button>
+        <button id="new-product-btn" class="a-btn a-btn--banana">+ Produto</button>
+      </div>
+    </div>
+    <div id="products-list"></div>
+  </div>
+
+  <!-- ABA: ADICIONAIS -->
+  <div class="a-pane" id="tab-adicionais">
+    <div class="a-toolbar">
+      <h2>Adicionais</h2>
+      <p class="a-hint">Valem para todo produto marcado com "aceita adicionais". Preço 0 = grátis.</p>
+    </div>
+    <form id="addons-form" class="a-card">
+      <div class="a-table-head a-addon-grid"><span>Nome</span><span>Grupo</span><span>Preço (R$)</span><span></span></div>
+      <div id="addons-list"></div>
+      <div class="a-form-actions">
+        <button type="button" id="add-addon-btn" class="a-btn a-btn--sm">+ Adicional</button>
+        <button type="submit" class="a-btn a-btn--ink">Salvar adicionais</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- ABA: ENTREGA -->
+  <div class="a-pane" id="tab-entrega">
+    <div class="a-toolbar"><h2>Entrega</h2></div>
+    <form id="delivery-form" class="a-card a-card--narrow">
+      <label class="a-switch a-switch--lg"><input type="checkbox" id="delivery-ativo"><span>Aceitar pedidos de entrega</span></label>
+
+      <label class="f-label" for="delivery-modo">Como cobrar a taxa</label>
+      <select class="f-input" id="delivery-modo">
+        <option value="fixo">Taxa única para todos</option>
+        <option value="bairro">Por bairro (cliente escolhe na lista)</option>
+      </select>
+
+      <div id="delivery-fixo-fields">
+        <label class="f-label" for="taxa-fixa">Taxa (R$) — 0 para grátis</label>
+        <input class="f-input" id="taxa-fixa" type="number" step="0.50" min="0">
+      </div>
+
+      <div id="delivery-bairro-fields" hidden>
+        <span class="f-label">Bairros atendidos</span>
+        <div id="bairros-list"></div>
+        <button type="button" id="add-bairro-btn" class="a-btn a-btn--sm">+ Bairro</button>
+      </div>
+
+      <p class="a-hint">Pagamento na entrega: Pix (o site gera o copia e cola com o valor) ou maquininha levada pelo entregador.</p>
+      <button type="submit" class="a-btn a-btn--ink">Salvar entrega</button>
+    </form>
+  </div>
+
+  <!-- ABA: EQUIPE E DADOS -->
+  <div class="a-pane" id="tab-ajustes">
+    <div class="a-toolbar"><h2>Equipe</h2></div>
+    <div class="a-card a-card--narrow">
+      <p class="a-hint">A pessoa precisa ter uma conta criada no Firebase Authentication. Depois de liberada, ela sai e entra de novo.</p>
+      <form class="a-inline-form" id="grant-admin-form">
+        <input class="f-input" id="new-admin-email" type="email" placeholder="email@dominio.com" required>
+        <button type="submit" class="a-btn a-btn--ink">Dar acesso</button>
+      </form>
+      <div id="admins-list"></div>
+    </div>
+
+    <div class="a-toolbar"><h2>Dados e privacidade</h2></div>
+    <div class="a-card a-card--narrow">
+      <p>Os pedidos guardam só apelido, mesa ou bairro, itens e valores. Endereço e telefone nunca chegam ao banco.</p>
+      <div class="a-maint-row">
+        <div>
+          <strong>Pedidos finalizados há mais de 30 dias</strong>
+          <span class="a-hint" id="old-orders-count">—</span>
+        </div>
+        <button type="button" class="a-btn a-btn--danger a-btn--sm" id="purge-orders-btn">Apagar</button>
+      </div>
+      <div class="a-maint-row">
+        <div>
+          <strong>Registros do sistema antigo</strong>
+          <span class="a-hint" id="legacy-count">transações e e-mails que podem conter endereço e e-mail de clientes</span>
+        </div>
+        <button type="button" class="a-btn a-btn--danger a-btn--sm" id="purge-legacy-btn">Apagar</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== MODAL: PRODUTO ===== -->
+<dialog id="product-modal" class="a-modal">
+  <form id="product-form" method="dialog">
+    <header class="a-modal-head">
+      <h3 id="modal-title">Novo produto</h3>
+      <button type="button" class="a-icon-btn" data-close-modal aria-label="Fechar">✕</button>
+    </header>
+    <input type="hidden" id="product-id">
+
+    <div class="a-photo-field">
+      <div id="image-preview" class="a-photo-preview"><span>sem foto</span></div>
+      <div>
+        <label class="a-btn a-btn--sm" for="product-image">Escolher foto</label>
+        <input id="product-image" type="file" accept="image/jpeg,image/png,image/webp" hidden>
+        <button type="button" class="a-btn a-btn--ghost a-btn--sm" id="remove-image-btn">Remover</button>
+        <p class="a-hint">A foto é reduzida para 1200 px e convertida em WebP antes do envio.</p>
+      </div>
+    </div>
+
+    <label class="f-label" for="product-name">Nome</label>
+    <input class="f-input" id="product-name" type="text" maxlength="60" required>
+
+    <label class="f-label" for="product-description">Descrição</label>
+    <textarea class="f-input" id="product-description" rows="2" maxlength="160"></textarea>
+
+    <div class="a-grid-2">
+      <div>
+        <label class="f-label" for="product-category">Categoria</label>
+        <select class="f-input" id="product-category" required></select>
+      </div>
+      <div>
+        <label class="f-label" for="product-price">Preço (R$)</label>
+        <input class="f-input" id="product-price" type="number" step="0.10" min="0" required>
+      </div>
+    </div>
+
+    <span class="f-label">Tamanhos <small>(opcional; se preencher, substituem o preço acima)</small></span>
+    <div id="sizes-list"></div>
+    <button type="button" class="a-btn a-btn--sm" id="add-size-btn">+ Tamanho</button>
+
+    <div class="a-checks">
+      <label class="a-switch"><input type="checkbox" id="product-addons"><span>Aceita adicionais</span></label>
+      <label class="a-switch"><input type="checkbox" id="product-available" checked><span>Disponível</span></label>
+      <label class="a-switch"><input type="checkbox" id="product-featured"><span>Destaque</span></label>
+    </div>
+
+    <p class="a-error" id="product-error" role="alert"></p>
+    <div class="a-form-actions">
+      <button type="button" class="a-btn a-btn--ghost" data-close-modal>Cancelar</button>
+      <button type="submit" class="a-btn a-btn--ink" id="product-save-btn">Salvar</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- ===== MODAL: CATEGORIA ===== -->
+<dialog id="category-modal" class="a-modal a-modal--sm">
+  <form id="category-form" method="dialog">
+    <header class="a-modal-head">
+      <h3 id="category-modal-title">Nova categoria</h3>
+      <button type="button" class="a-icon-btn" data-close-modal aria-label="Fechar">✕</button>
+    </header>
+    <input type="hidden" id="category-id">
+    <label class="f-label" for="category-name">Nome</label>
+    <input class="f-input" id="category-name" maxlength="40" required>
+    <label class="f-label" for="category-order">Posição no cardápio</label>
+    <input class="f-input" id="category-order" type="number" step="1" min="0">
+    <div class="a-form-actions">
+      <button type="button" class="a-btn a-btn--danger a-btn--sm" id="category-delete-btn" hidden>Excluir</button>
+      <button type="submit" class="a-btn a-btn--ink">Salvar</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-functions-compat.js"></script>
+<script src="../js/firebase-config.js"></script>
+<script src="../js/config.js"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/admin/admin-auth.js"></script>
+<script src="../js/admin/admin-orders.js"></script>
+<script src="../js/admin/admin-products.js"></script>
+<script src="../js/admin/admin-addons.js"></script>
+<script src="../js/admin/admin-delivery.js"></script>
+<script src="../js/admin/admin-users.js"></script>
+</body>
+</html>
