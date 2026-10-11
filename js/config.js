@@ -2,7 +2,7 @@
  * config.js
  * -------------------------------------------------------
  * Tudo que identifica a açaiteria fica aqui. Nenhum outro
- * arquivo tem nome, telefone ou chave Pix escritos à mão.
+ * arquivo tem nome ou telefone escritos à mão.
  * -------------------------------------------------------
  */
 
@@ -25,14 +25,9 @@ const restaurantConfig = {
     { label: "Domingo", day: 0, open: "12:00", close: "21:00" },
   ],
 
-  // Usado para gerar o Pix "copia e cola" com o valor já preenchido
-  // (só no pedido de entrega — na loja o Pix é feito no caixa).
-  pix: {
-    key: "+5511977777777",   // telefone com +55, e-mail, CPF/CNPJ ou chave aleatória
-    keyType: "Telefone",
-    receiverName: "ROXO DA VILA",  // até 25 caracteres, sem acento
-    city: "SANTO ANDRE",           // até 15 caracteres, sem acento
-  },
+  // A chave Pix NÃO fica aqui (este arquivo é público).
+  // Ela é cadastrada no painel /admin → Entrega → Pix e usada
+  // só no servidor (Cloud Function gerarPix).
 
   seo: {
     title: "Roxo da Vila — Açaiteria",

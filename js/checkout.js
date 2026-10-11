@@ -440,6 +440,62 @@ function buildWhatsMessage(order) {
   return lines.join("\n").replace(/\n{3,}/g, "\n\n");
 }
 
+/* ---------------- Pix (gerado no servidor) ----------------
+ * A chave Pix não existe no código do site: a Cloud Function
+ * gerarPix monta o copia e cola a partir do pedido gravado.
+ * O código fica só na memória e não é exibido na tela — o
+ * cliente usa o botão "Copiar". Se a cópia automática falhar,
+ * o código aparece num campo para copiar à mão.
+ */
+
+async function loadPixCode() {
+  const o = activeOrder;
+  if (!o) return;
+  o.pixState = "loading";
+  if (currentSheet === "tracking") renderTrackingBody();
+  try {
+    const { data } = await firebase.functions().httpsCallable("gerarPix")({ orderId: o.id });
+    if (activeOrder !== o) return;
+    o.pixCode = data.copiaECola;
+    o.pixState = "ready";
+  } catch (err) {
+    console.warn("Pix indisponível:", err.code, err.message);
+    if (activeOrder !== o) return;
+    o.pixState = "error";
+  }
+  if (currentSheet === "tracking") renderTrackingBody();
+}
+
+async function copyPixCode() {
+  const o = activeOrder;
+  if (!o?.pixCode) return;
+  const ok = await copyText(o.pixCode);
+  if (ok) {
+    showToast("Código Pix copiado. Cole no app do seu banco.");
+  } else {
+    o.pixState = "manual";
+    renderTrackingBody();
+  }
+}
+
+function pixBoxHTML(o) {
+  const body = {
+    idle:    `<button type="button" class="btn btn--banana btn--block" disabled>Gerando código Pix…</button>`,
+    loading: `<button type="button" class="btn btn--banana btn--block" disabled>Gerando código Pix…</button>`,
+    ready:   `<button type="button" class="btn btn--banana btn--block" data-copy-pix>Copiar código Pix</button>
+              <span class="pix-meta">Abra o app do banco → Pix → Pix Copia e Cola. Confira o nome da loja antes de confirmar.</span>`,
+    manual:  `<label class="pix-meta" for="pix-manual">Não deu para copiar sozinho. Toque no campo, selecione tudo e copie:</label>
+              <textarea class="pix-code" id="pix-manual" rows="4" readonly>${esc(o.pixCode)}</textarea>`,
+    error:   `<p class="pix-meta">Não conseguimos gerar o Pix agora. Você pode pagar na entrega com a maquininha ou pedir o Pix pelo WhatsApp.</p>
+              <button type="button" class="btn btn--ghost btn--block" data-retry-pix>Tentar de novo</button>`,
+  }[o.pixState];
+  return `
+    <div class="pix-box">
+      <span class="pix-title">Pix de ${money(o.total)}</span>
+      ${body}
+    </div>`;
+}
+
 /* ---------------- Acompanhamento ---------------- */
 
 const STATUS_FLOW = {
@@ -449,7 +505,8 @@ const STATUS_FLOW = {
 
 function startTracking(info) {
   activeOrder?.unsubscribe?.();
-  activeOrder = { ...info, status: "novo", unsubscribe: null };
+  activeOrder = { ...info, status: "novo", unsubscribe: null, pixCode: "", pixState: "idle" };
+  if (info.modo === "entrega" && info.pagamento === "pix") loadPixCode();
   activeOrder.unsubscribe = db.collection("pedidos").doc(info.id).onSnapshot(
     snap => {
       if (!snap.exists) return;
@@ -481,18 +538,7 @@ function renderTrackingBody() {
     : `<ol class="steps">${flow.map(([, label], i) =>
         `<li class="step${i < idx ? " is-done" : ""}${i === idx ? " is-current" : ""}">${esc(label)}</li>`).join("")}</ol>`;
 
-  const pix = o.modo === "entrega" && o.pagamento === "pix"
-    ? (() => {
-        const code = pixCopiaECola(restaurantConfig.pix, o.total, o.code);
-        return `
-          <div class="pix-box">
-            <span class="pix-title">Pix de ${money(o.total)}</span>
-            <code class="pix-code" id="pix-code">${esc(code)}</code>
-            <button type="button" class="btn btn--banana btn--block" data-copy-pix>Copiar código Pix</button>
-            <span class="pix-meta">Recebedor: ${esc(restaurantConfig.pix.receiverName)} · Chave (${esc(restaurantConfig.pix.keyType)})</span>
-          </div>`;
-      })()
-    : "";
+  const pix = o.modo === "entrega" && o.pagamento === "pix" ? pixBoxHTML(o) : "";
 
   const nextStep = o.modo === "entrega"
     ? `<p class="done-lead"><strong>Falta um passo:</strong> envie o endereço pelo WhatsApp para a gente sair com o seu pedido.</p>
@@ -513,10 +559,8 @@ function renderTrackingBody() {
     ${nextStep}
     <button type="button" class="btn btn--ghost btn--block" data-sheet-close>Voltar ao cardápio</button>`;
 
-  body.querySelector("[data-copy-pix]")?.addEventListener("click", async () => {
-    const ok = await copyText(document.getElementById("pix-code").textContent);
-    showToast(ok ? "Código Pix copiado" : "Toque e segure o código para copiar");
-  });
+  body.querySelector("[data-copy-pix]")?.addEventListener("click", copyPixCode);
+  body.querySelector("[data-retry-pix]")?.addEventListener("click", loadPixCode);
 
   body.querySelector("[data-send-whats]")?.addEventListener("click", () => {
     // O link já foi aberto; agora a mensagem com o endereço some da memória.

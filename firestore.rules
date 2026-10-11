@@ -54,8 +54,10 @@ service cloud.firestore {
     }
 
     // ---- Cardápio e configurações: leitura pública, escrita só admin ----
+    // config/pix guarda a chave e o recebedor: só o admin lê.
+    // O código Pix do cliente é gerado pela Cloud Function gerarPix.
     match /config/{docId} {
-      allow read: if true;
+      allow read: if docId != 'pix' || isAdmin();
       allow write: if isAdmin();
     }
     match /categorias/{catId} {

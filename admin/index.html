@@ -120,6 +120,40 @@
       <p class="a-hint">Pagamento na entrega: Pix (o site gera o copia e cola com o valor) ou maquininha levada pelo entregador.</p>
       <button type="submit" class="a-btn a-btn--ink">Salvar entrega</button>
     </form>
+
+    <div class="a-toolbar"><h2>Pix da loja</h2></div>
+    <form id="pix-form" class="a-card a-card--narrow" autocomplete="off">
+      <p class="a-hint">Estes dados ficam protegidos no servidor e não aparecem no site nem no GitHub. O cliente de entrega recebe só o código copia e cola com o valor do pedido.</p>
+
+      <label class="f-label" for="pix-key-type">Tipo de chave</label>
+      <select class="f-input" id="pix-key-type">
+        <option value="telefone">Telefone</option>
+        <option value="email">E-mail</option>
+        <option value="cpf">CPF</option>
+        <option value="cnpj">CNPJ</option>
+        <option value="aleatoria">Chave aleatória</option>
+      </select>
+
+      <label class="f-label" for="pix-key">Chave Pix</label>
+      <input class="f-input" id="pix-key" maxlength="77" spellcheck="false" required>
+      <span class="a-hint" id="pix-key-hint"></span>
+
+      <div class="a-grid-2">
+        <div>
+          <label class="f-label" for="pix-name">Nome do recebedor <small>(até 25 letras)</small></label>
+          <input class="f-input" id="pix-name" maxlength="25" required>
+        </div>
+        <div>
+          <label class="f-label" for="pix-city">Cidade <small>(até 15 letras)</small></label>
+          <input class="f-input" id="pix-city" maxlength="15" required>
+        </div>
+      </div>
+
+      <p class="a-error" id="pix-error" role="alert"></p>
+      <div class="a-form-actions">
+        <button type="submit" class="a-btn a-btn--ink">Salvar Pix</button>
+      </div>
+    </form>
   </div>
 
   <!-- ABA: EQUIPE E DADOS -->

@@ -6,7 +6,7 @@ Cardápio por QR Code com pedido online, montagem do copo (tamanho + adicionais)
 
 | Modalidade      | Opções                                                     |
 |-----------------|------------------------------------------------------------|
-| **Entrega**     | Pix (o site gera o copia e cola com o valor) · Maquininha na entrega |
+| **Entrega**     | Pix (copia e cola gerado no servidor, com o valor) · Maquininha na entrega |
 | **Consumir aqui** | Cartão no caixa · Pix no caixa                           |
 
 Nenhum dado de cartão passa pelo site. Não há gateway de pagamento.
@@ -21,6 +21,7 @@ código curto, modalidade, forma de pagamento, **apelido**, **mesa** (local) ou 
 - O endereço de entrega existe só na memória do celular do cliente até ele tocar em *Enviar endereço no WhatsApp*. Depois disso é apagado.
 - **CEP:** ao digitar o CEP, o site consulta o ViaCEP (ou a BrasilAPI, se o ViaCEP falhar) e preenche rua, bairro e cidade. Só o CEP é enviado nessa consulta, e nada é gravado. Se o bairro estiver na lista do painel, ele é selecionado com a taxa configurada lá; se não estiver, o cliente escolhe o mais próximo. **As taxas por bairro são sempre definidas no painel (aba Entrega)**, nunca no código.
 - As regras do Firestore (`firestore.rules`) usam `hasOnly()`: qualquer campo extra é **recusado pelo servidor**, mesmo que alguém altere o JavaScript.
+- **Chave Pix protegida:** a chave e o nome do recebedor ficam em `config/pix` no Firestore, que só o admin lê, e são editados no painel (**Entrega → Pix da loja**). Eles não estão no código público. A Cloud Function `gerarPix` monta o copia e cola só para um pedido de entrega com Pix das últimas 24 h, usando o valor gravado no pedido. O cliente vê apenas o botão **Copiar código Pix**. Ao colar no app do banco, o próprio banco mostra o nome do recebedor, como em qualquer Pix.
 - O site não usa cookies, `localStorage` nem analytics.
 - No painel, **Equipe e dados → Dados e privacidade** apaga pedidos com mais de 30 dias e os registros do sistema antigo (`transacoes`, `emails`), que podem ter endereço e e-mail de clientes.
 
@@ -34,9 +35,9 @@ css/
   style.css             site
   admin.css             painel
 js/
-  config.js             nome, WhatsApp, horários, chave Pix ← edite aqui
+  config.js             nome, WhatsApp, horários ← edite aqui
   firebase-config.js    projeto Firebase
-  utils.js              money, escape de HTML, Pix copia e cola, horário
+  utils.js              money, escape de HTML, horário
   catalog.js            carrega e desenha o cardápio
   cart.js               comanda (em memória)
   ui.js                 sheet, montagem do copo, navegação
@@ -46,7 +47,7 @@ js/
 data/
   menu.js               cardápio de referência / reserva offline
   seed.js               grava o menu.js no Firestore (uma vez)
-functions/              concederAdmin / revogarAdmin
+functions/              concederAdmin / revogarAdmin / gerarPix
 scripts/set-admin.js    cria o primeiro administrador
 qr/gerador.html         gera QR Code para imprimir
 _legado/                arquivos da versão anterior (pode apagar)
@@ -54,7 +55,7 @@ _legado/                arquivos da versão anterior (pode apagar)
 
 ## Primeira configuração
 
-1. Edite `js/config.js` (nome, WhatsApp, horários, chave Pix).
+1. Edite `js/config.js` (nome, WhatsApp, horários). A chave Pix vai no painel, não no código.
 2. Publique as regras: `firebase deploy --only firestore:rules,storage`
 3. Crie o primeiro admin (uma vez): `cd scripts && npm install && node set-admin.js voce@email.com "Seu Nome"`
 4. Entre em `/admin`, abra o console (F12), cole `data/menu.js` e depois `data/seed.js`.

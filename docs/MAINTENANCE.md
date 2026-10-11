@@ -21,6 +21,9 @@ Uma lista única (nome, grupo, preço), usada por todo produto com "aceita adici
 ## Entrega
 Liga/desliga a entrega e define a taxa: única para todos ou por bairro (o cliente escolhe o bairro numa lista).
 
+## Pix da loja
+Na aba **Entrega → Pix da loja**: tipo de chave, chave, nome do recebedor (até 25 letras) e cidade (até 15). Esses dados ficam protegidos no servidor e nunca aparecem no site. Troque os dados de exemplo pelos reais antes de aceitar Pix.
+
 ## Horários
 Ficam em `js/config.js`. Fora do horário o cliente consegue montar a comanda, mas o envio fica bloqueado.
 

@@ -1,8 +1,9 @@
 /**
  * functions/index.js
  * -------------------------------------------------------
- * Só o que precisa de privilégio de servidor: conceder e
- * revogar acesso de administrador.
+ * Só o que precisa de privilégio de servidor:
+ *   - conceder e revogar acesso de administrador;
+ *   - gerar o Pix copia e cola sem expor a chave no site.
  *
  * Removido nesta versão:
  *   - Mercado Pago (pagamento online com cartão): o pagamento
@@ -18,3 +19,6 @@ const admins = require("./admins");
 
 exports.concederAdmin = admins.concederAdmin;
 exports.revogarAdmin = admins.revogarAdmin;
+
+const pix = require("./pix");
+exports.gerarPix = pix.gerarPix;

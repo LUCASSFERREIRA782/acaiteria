@@ -486,6 +486,7 @@ select.field { appearance: none; background-image: linear-gradient(45deg, transp
   font-family: var(--font-mono); font-size: var(--fs-xs); word-break: break-all; user-select: all;
 }
 .pix-box .btn--block { margin-top: 0; }
+textarea.pix-code { width: 100%; resize: none; color: var(--ink); }
 .pix-meta { font-size: var(--fs-xs); color: var(--ink-soft); }
 
 /* ============ Toast ============ */
