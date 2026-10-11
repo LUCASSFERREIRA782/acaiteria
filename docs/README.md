@@ -19,6 +19,7 @@ código curto, modalidade, forma de pagamento, **apelido**, **mesa** (local) ou 
 **Nunca** gravado: endereço, telefone, e-mail, CPF ou dados de cartão.
 
 - O endereço de entrega existe só na memória do celular do cliente até ele tocar em *Enviar endereço no WhatsApp*. Depois disso é apagado.
+- **CEP:** ao digitar o CEP, o site consulta o ViaCEP (ou a BrasilAPI, se o ViaCEP falhar) e preenche rua, bairro e cidade. Só o CEP é enviado nessa consulta, e nada é gravado. Se o bairro estiver na lista do painel, ele é selecionado com a taxa configurada lá; se não estiver, o cliente escolhe o mais próximo. **As taxas por bairro são sempre definidas no painel (aba Entrega)**, nunca no código.
 - As regras do Firestore (`firestore.rules`) usam `hasOnly()`: qualquer campo extra é **recusado pelo servidor**, mesmo que alguém altere o JavaScript.
 - O site não usa cookies, `localStorage` nem analytics.
 - No painel, **Equipe e dados → Dados e privacidade** apaga pedidos com mais de 30 dias e os registros do sistema antigo (`transacoes`, `emails`), que podem ter endereço e e-mail de clientes.

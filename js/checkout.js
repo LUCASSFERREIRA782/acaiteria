@@ -37,7 +37,9 @@ const checkout = {
   apelido: "",
   mesa: "",
   bairro: "",
-  endereco: { rua: "", numero: "", complemento: "", referencia: "" }, // só em memória
+  endereco: { cep: "", rua: "", numero: "", complemento: "", referencia: "", cidade: "" }, // só em memória
+  cepStatus: "",      // mensagem abaixo do campo CEP
+  cepLookup: "",      // último CEP consultado (evita consulta repetida)
   sending: false,
 };
 
@@ -49,7 +51,9 @@ function onSheetClosed() {
 }
 
 function wipeAddress() {
-  checkout.endereco = { rua: "", numero: "", complemento: "", referencia: "" };
+  checkout.endereco = { cep: "", rua: "", numero: "", complemento: "", referencia: "", cidade: "" };
+  checkout.cepStatus = "";
+  checkout.cepLookup = "";
 }
 
 /* ---------------- Taxa de entrega ---------------- */
@@ -116,7 +120,22 @@ function renderOrderBody() {
            ${(d.bairros || []).map(b => `<option value="${esc(b.nome)}" ${checkout.bairro === b.nome ? "selected" : ""}>${esc(b.nome)} · ${money(b.taxa)}</option>`).join("")}
          </select>
        </label>`
-    : "";
+    : `<label class="field-group">
+         <span class="legend">Bairro</span>
+         <input class="field" name="bairro" maxlength="40" autocomplete="off" value="${esc(checkout.bairro)}">
+       </label>`;
+
+  const cepField = `
+    <div class="field-row">
+      <label class="field-group">
+        <span class="legend">CEP</span>
+        <input class="field" name="cep" inputmode="numeric" maxlength="9" autocomplete="off" placeholder="00000-000" value="${esc(checkout.endereco.cep)}">
+      </label>
+      <div class="field-group cep-help">
+        <a class="cep-link" href="https://buscacepinter.correios.com.br/app/endereco/index.php" target="_blank" rel="noopener">Não sei meu CEP</a>
+      </div>
+    </div>
+    <p class="cep-status" id="cep-status" role="status">${esc(checkout.cepStatus)}</p>`;
 
   const modeFields = checkout.modo === "local"
     ? `<div class="field-row">
@@ -133,6 +152,7 @@ function renderOrderBody() {
          <span class="legend">Como te chamamos? <span class="req">obrigatório</span></span>
          <input class="field" name="apelido" maxlength="30" autocomplete="off" placeholder="Primeiro nome ou apelido" value="${esc(checkout.apelido)}" required>
        </label>
+       ${cepField}
        ${bairroField}
        <div class="field-row">
          <label class="field-group">
@@ -230,6 +250,14 @@ function attachOrderEvents(body) {
   form.addEventListener("input", e => {
     const { name, value } = e.target;
     if (name === "apelido" || name === "mesa") checkout[name] = value;
+    if (name === "cep") {
+      const digits = value.replace(/\D/g, "").slice(0, 8);
+      e.target.value = digits.length > 5 ? `${digits.slice(0, 5)}-${digits.slice(5)}` : digits;
+      checkout.endereco.cep = e.target.value;
+      if (digits.length === 8) lookupCep(digits);
+      return;
+    }
+    if (name === "bairro" && e.target.tagName === "INPUT") checkout.bairro = value;
     if (name in checkout.endereco) checkout.endereco[name] = value;
   });
 
@@ -238,7 +266,7 @@ function attachOrderEvents(body) {
     const { name, value } = e.target;
     if (name === "modo") checkout.modo = value;
     else if (name === "pagamento") checkout.pagamento = value;
-    else if (name === "bairro") checkout.bairro = value;
+    else if (name === "bairro" && e.target.tagName === "SELECT") checkout.bairro = value;
     else return;
     renderOrderBody();
   });
@@ -311,6 +339,79 @@ async function submitOrder() {
   checkout.sending = false;
 }
 
+/* ---------------- CEP ---------------- */
+
+const normalizeName = t => String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+
+/** Busca o endereço do CEP (ViaCEP; se falhar, BrasilAPI). Nada é gravado:
+ *  o resultado só preenche os campos na tela. */
+async function fetchCep(cep) {
+  const withTimeout = url => {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 5000);
+    return fetch(url, { signal: ctrl.signal, referrerPolicy: "no-referrer" }).finally(() => clearTimeout(t));
+  };
+  try {
+    const r = await withTimeout(`https://viacep.com.br/ws/${cep}/json/`);
+    const j = await r.json();
+    if (j.erro) return null;
+    return { rua: j.logradouro || "", bairro: j.bairro || "", cidade: j.localidade && j.uf ? `${j.localidade}/${j.uf}` : "" };
+  } catch {
+    const r = await withTimeout(`https://brasilapi.com.br/api/cep/v1/${cep}`);
+    if (r.status === 404) return null;
+    if (!r.ok) throw new Error("cep");
+    const j = await r.json();
+    return { rua: j.street || "", bairro: j.neighborhood || "", cidade: j.city && j.state ? `${j.city}/${j.state}` : "" };
+  }
+}
+
+async function lookupCep(cep) {
+  if (checkout.cepLookup === cep) return;
+  checkout.cepLookup = cep;
+  const statusEl = document.getElementById("cep-status");
+  if (statusEl) statusEl.textContent = "Buscando endereço…";
+
+  let found = null;
+  try {
+    found = await fetchCep(cep);
+  } catch {
+    checkout.cepStatus = "Não conseguimos consultar o CEP agora. Preencha o endereço à mão.";
+    checkout.cepLookup = "";
+    if (statusEl) statusEl.textContent = checkout.cepStatus;
+    return;
+  }
+  if (checkout.endereco.cep.replace(/\D/g, "") !== cep) return; // o cliente já mudou o CEP
+
+  if (!found) {
+    checkout.endereco.cidade = "";
+    checkout.cepStatus = "CEP não encontrado. Confira os números ou preencha o endereço à mão.";
+  } else {
+    if (found.rua) checkout.endereco.rua = found.rua;
+    checkout.endereco.cidade = found.cidade;
+    const d = catalog.delivery;
+    if (d.modo === "bairro") {
+      const match = (d.bairros || []).find(b => normalizeName(b.nome) === normalizeName(found.bairro));
+      if (match) {
+        checkout.bairro = match.nome;
+        checkout.cepStatus = `${found.cidade} · entregamos no ${match.nome} (${money(match.taxa)})`;
+      } else {
+        checkout.bairro = ""; // não deixa a taxa de outro bairro selecionada
+        checkout.cepStatus = found.bairro
+          ? `${found.bairro} não está na nossa lista. Escolha o bairro mais próximo ou chame no WhatsApp.`
+          : `${found.cidade}. Escolha o seu bairro na lista.`;
+      }
+    } else {
+      if (found.bairro) checkout.bairro = found.bairro.slice(0, 40);
+      checkout.cepStatus = found.cidade;
+    }
+  }
+
+  renderOrderBody();
+  // Rua veio do CEP? O próximo campo útil é o número.
+  const next = document.querySelector(`#checkout-form [name="${found && found.rua ? "numero" : "rua"}"]`);
+  next?.focus();
+}
+
 const round2 = n => Math.round(n * 100) / 100;
 
 function buildWhatsMessage(order) {
@@ -332,6 +433,8 @@ function buildWhatsMessage(order) {
     "*Endereço*",
     `${e.rua.trim()}, ${e.numero.trim()}${e.complemento.trim() ? ` — ${e.complemento.trim()}` : ""}`,
     order.bairro ? `Bairro: ${order.bairro}` : null,
+    e.cidade.trim() ? `Cidade: ${e.cidade.trim()}` : null,
+    e.cep.trim() ? `CEP: ${e.cep.trim()}` : null,
     e.referencia.trim() ? `Referência: ${e.referencia.trim()}` : null,
   ].filter(l => l !== null);
   return lines.join("\n").replace(/\n{3,}/g, "\n\n");
