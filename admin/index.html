@@ -4,7 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
-<meta name="referrer" content="no-referrer">
+<!-- Envia só o domínio (sem o caminho) nas chamadas ao Google: a chave de API
+     com restrição de sites precisa dele para liberar o login. -->
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://firebasestorage.googleapis.com; connect-src 'self' https://firestore.googleapis.com https://firebasestorage.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://us-central1-menu-digital-md3.cloudfunctions.net; frame-src https://menu-digital-md3.firebaseapp.com; object-src 'none'; base-uri 'self'; form-action 'self'">
 <script src="../js/admin/frame-guard.js"></script>
 <meta name="theme-color" content="#2A0B24">
