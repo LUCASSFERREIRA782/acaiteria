@@ -27,39 +27,70 @@ const NEXT_STATUS = {
 
 const STATUS_COL = { novo: "novo", preparo: "preparo", pronto: "pronto", saiu: "pronto", concluido: "fim", cancelado: "fim" };
 
+const OPEN_STATUSES = ["novo", "preparo", "pronto", "saiu"];
+let rangeOrders = new Map();   // pedidos do período escolhido
+let openOrders = new Map();    // pedidos em andamento, de qualquer data
+let listenerDay = "";
+
 function initOrdersAdmin() {
-  document.getElementById("orders-range").addEventListener("change", startOrdersListener);
+  const range = document.getElementById("orders-range");
+  try { const saved = localStorage.getItem("painel.periodoPedidos"); if (saved && range.querySelector(`option[value="${saved}"]`)) range.value = saved; } catch {}
+  range.addEventListener("change", () => {
+    try { localStorage.setItem("painel.periodoPedidos", range.value); } catch {}
+    startOrdersListener();
+  });
   document.getElementById("orders-board").addEventListener("click", onBoardClick);
   document.addEventListener("click", unlockAudio, { once: true });
-  setInterval(renderOrders, 60 * 1000); // atualiza o "há X min"
+  setInterval(() => {
+    // Virou o dia com o painel aberto: recomeça a escuta para o novo "hoje"
+    if (unsubscribeOrders && listenerDay !== new Date().toDateString()) startOrdersListener();
+    else renderOrders(); // atualiza o "há X min"
+  }, 60 * 1000);
 }
 
 function startOrdersListener() {
   stopOrdersListener();
   knownOrderIds = null;
+  rangeOrders = new Map();
+  openOrders = new Map();
+  listenerDay = new Date().toDateString();
 
-  const range = document.getElementById("orders-range").value;
+  const days = Number(document.getElementById("orders-range").value) || 1;
   const since = new Date();
   since.setHours(0, 0, 0, 0);
-  if (range === "7") since.setDate(since.getDate() - 6);
+  since.setDate(since.getDate() - (days - 1));
 
-  unsubscribeOrders = db.collection("pedidos")
+  const onError = err => {
+    console.error(err);
+    document.getElementById("orders-summary").textContent = `Erro ao carregar pedidos: ${err.message}`;
+  };
+
+  // 1) Pedidos do período (finalizados e em andamento)
+  const unsubRange = db.collection("pedidos")
     .where("criadoEm", ">=", since)
     .orderBy("criadoEm", "desc")
-    .limit(300)
-    .onSnapshot(snap => {
-      ordersCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      const ids = new Set(ordersCache.map(o => o.id));
-      if (knownOrderIds) {
-        const fresh = ordersCache.filter(o => !knownOrderIds.has(o.id) && o.status === "novo");
-        if (fresh.length) notifyNewOrder(fresh.length);
-      }
-      knownOrderIds = ids;
-      renderOrders();
-    }, err => {
-      console.error(err);
-      document.getElementById("orders-summary").textContent = `Erro ao carregar pedidos: ${err.message}`;
-    });
+    .limit(500)
+    .onSnapshot(snap => { rangeOrders = new Map(snap.docs.map(d => [d.id, { id: d.id, ...d.data() }])); mergeOrders(); }, onError);
+
+  // 2) Pedidos em andamento de QUALQUER dia — não somem do quadro na virada do dia
+  const unsubOpen = db.collection("pedidos")
+    .where("status", "in", OPEN_STATUSES)
+    .limit(200)
+    .onSnapshot(snap => { openOrders = new Map(snap.docs.map(d => [d.id, { id: d.id, ...d.data() }])); mergeOrders(); }, onError);
+
+  unsubscribeOrders = () => { unsubRange(); unsubOpen(); };
+}
+
+function mergeOrders() {
+  const merged = new Map([...rangeOrders, ...openOrders]);
+  ordersCache = [...merged.values()].sort((a, b) => (b.criadoEm?.toMillis?.() || 0) - (a.criadoEm?.toMillis?.() || 0));
+  const ids = new Set(ordersCache.map(o => o.id));
+  if (knownOrderIds) {
+    const fresh = ordersCache.filter(o => !knownOrderIds.has(o.id) && o.status === "novo");
+    if (fresh.length) notifyNewOrder(fresh.length);
+  }
+  knownOrderIds = ids;
+  renderOrders();
 }
 
 function stopOrdersListener() {
