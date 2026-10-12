@@ -40,7 +40,8 @@
       <button class="a-tab" data-tab="cardapio" role="tab">Cardápio</button>
       <button class="a-tab" data-tab="adicionais" role="tab">Adicionais</button>
       <button class="a-tab" data-tab="entrega" role="tab">Entrega</button>
-      <button class="a-tab" data-tab="ajustes" role="tab">Equipe e dados</button>
+      <button class="a-tab" data-tab="loja" role="tab">Loja e equipe</button>
+      <button class="a-tab" data-tab="relatorios" role="tab">Relatórios e dados</button>
     </nav>
     <button id="logout-btn" class="a-btn a-btn--ghost a-btn--sm">Sair</button>
   </header>
@@ -156,9 +157,64 @@
     </form>
   </div>
 
-  <!-- ABA: EQUIPE E DADOS -->
-  <div class="a-pane" id="tab-ajustes">
-    <div class="a-toolbar"><h2>Equipe</h2></div>
+  <!-- ABA: LOJA E EQUIPE -->
+  <div class="a-pane" id="tab-loja">
+    <div class="a-toolbar">
+      <h2>Horário de funcionamento</h2>
+      <span class="a-store-status" id="store-status-now"></span>
+    </div>
+    <form id="hours-form" class="a-card a-card--narrow">
+      <span class="f-label">Agora</span>
+      <div class="a-segmented" role="radiogroup" aria-label="Status da loja">
+        <label><input type="radio" name="statusManual" value="auto" checked><span>Seguir horários</span></label>
+        <label><input type="radio" name="statusManual" value="aberto"><span>Abrir agora</span></label>
+        <label><input type="radio" name="statusManual" value="fechado"><span>Fechar agora</span></label>
+      </div>
+      <p class="a-hint">"Abrir/Fechar agora" vale até você voltar para "Seguir horários". Útil em feriado, falta de produto ou fim de expediente antecipado.</p>
+
+      <span class="f-label">Dias e horários</span>
+      <div class="a-hours" id="hours-list"></div>
+      <p class="a-hint">Para fechar depois da meia-noite, coloque o fechamento menor que a abertura (ex.: 18:00 → 01:00).</p>
+      <div class="a-form-actions">
+        <button type="button" class="a-btn a-btn--sm" id="copy-hours-btn">Copiar segunda para todos os dias úteis</button>
+        <button type="submit" class="a-btn a-btn--ink">Salvar horários</button>
+      </div>
+    </form>
+
+    <div class="a-toolbar"><h2>WhatsApp da equipe</h2></div>
+    <form id="whats-form" class="a-card a-card--narrow">
+      <p class="a-hint">Cadastre um ou mais números. Os marcados com "Recebe pedidos" dividem os pedidos de entrega entre si (o cliente é enviado para um deles) e só esses aparecem no site; os demais ficam privados. O primeiro que recebe pedidos é o contato do rodapé do site.</p>
+      <div class="a-table-head a-whats-grid"><span>Nome</span><span>WhatsApp (com DDD)</span><span>Recebe pedidos</span><span></span></div>
+      <div id="whats-list"></div>
+      <p class="a-error" id="whats-error" role="alert"></p>
+      <div class="a-form-actions">
+        <button type="button" class="a-btn a-btn--sm" id="add-whats-btn">+ WhatsApp</button>
+        <button type="submit" class="a-btn a-btn--ink">Salvar WhatsApp</button>
+      </div>
+    </form>
+
+    <div class="a-toolbar"><h2>Dados da loja</h2></div>
+    <form id="store-form" class="a-card a-card--narrow">
+      <div class="a-grid-2">
+        <div>
+          <label class="f-label" for="store-name">Nome</label>
+          <input class="f-input" id="store-name" maxlength="40" required>
+        </div>
+        <div>
+          <label class="f-label" for="store-instagram">Instagram (link)</label>
+          <input class="f-input" id="store-instagram" type="url" maxlength="120" placeholder="https://instagram.com/…">
+        </div>
+      </div>
+      <label class="f-label" for="store-slogan">Frase do topo</label>
+      <input class="f-input" id="store-slogan" maxlength="80">
+      <label class="f-label" for="store-address">Endereço</label>
+      <input class="f-input" id="store-address" maxlength="120">
+      <div class="a-form-actions">
+        <button type="submit" class="a-btn a-btn--ink">Salvar dados</button>
+      </div>
+    </form>
+
+    <div class="a-toolbar"><h2>Administradores</h2></div>
     <div class="a-card a-card--narrow">
       <p class="a-hint">A pessoa precisa ter uma conta criada no Firebase Authentication. Depois de liberada, ela sai e entra de novo.</p>
       <form class="a-inline-form" id="grant-admin-form">
@@ -167,14 +223,54 @@
       </form>
       <div id="admins-list"></div>
     </div>
+  </div>
+
+  <!-- ABA: RELATÓRIOS E DADOS -->
+  <div class="a-pane" id="tab-relatorios">
+    <div class="a-toolbar">
+      <h2>Desempenho</h2>
+      <div class="a-toolbar-right">
+        <div class="a-segmented a-segmented--sm" role="radiogroup" aria-label="Agrupar por">
+          <label><input type="radio" name="reportGroup" value="dia" checked><span>Por dia</span></label>
+          <label><input type="radio" name="reportGroup" value="semana"><span>Por dia da semana</span></label>
+        </div>
+        <select class="f-input f-input--sm" id="report-range" aria-label="Período">
+          <option value="7">Últimos 7 dias</option>
+          <option value="30" selected>Últimos 30 dias</option>
+          <option value="90">Últimos 90 dias</option>
+        </select>
+      </div>
+    </div>
+    <div class="a-kpis" id="report-kpis"></div>
+    <div class="a-insights" id="report-insights"></div>
+    <div class="a-charts">
+      <figure class="a-chart a-card" id="chart-revenue"></figure>
+      <figure class="a-chart a-card" id="chart-orders"></figure>
+    </div>
+    <details class="a-card a-report-table">
+      <summary>Ver tabela</summary>
+      <div id="report-table"></div>
+    </details>
+    <p class="a-hint">Faturamento = soma dos pedidos não cancelados (inclui taxa de entrega). Não é lucro: os custos dos produtos não são registrados no sistema.</p>
 
     <div class="a-toolbar"><h2>Dados e privacidade</h2></div>
     <div class="a-card a-card--narrow">
       <p>Os pedidos guardam só apelido, mesa ou bairro, itens e valores. Endereço e telefone nunca chegam ao banco.</p>
+      <div class="a-privacy-summary" id="privacy-summary">Carregando…</div>
+
       <div class="a-maint-row">
         <div>
-          <strong>Pedidos finalizados há mais de 30 dias</strong>
-          <span class="a-hint" id="old-orders-count">—</span>
+          <strong>Apagar pedidos finalizados e cancelados</strong>
+          <span class="a-hint">Os totais do dia continuam no relatório (sem nenhum dado do cliente).</span>
+          <label class="a-inline-label">com mais de
+            <select class="f-input f-input--sm" id="purge-days">
+              <option value="0">0 dias (todos, inclusive de hoje)</option>
+              <option value="7">7 dias</option>
+              <option value="30" selected>30 dias</option>
+              <option value="90">90 dias</option>
+            </select>
+          </label>
+          <span class="a-hint" id="purge-preview">—</span>
         </div>
         <button type="button" class="a-btn a-btn--danger a-btn--sm" id="purge-orders-btn">Apagar</button>
       </div>
@@ -279,5 +375,7 @@
 <script src="../js/admin/admin-addons.js"></script>
 <script src="../js/admin/admin-delivery.js"></script>
 <script src="../js/admin/admin-users.js"></script>
+<script src="../js/admin/admin-store.js"></script>
+<script src="../js/admin/admin-reports.js"></script>
 </body>
 </html>

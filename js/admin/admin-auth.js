@@ -38,6 +38,8 @@ auth.onAuthStateChanged(async user => {
     initAddonsAdmin();
     initDeliveryAdmin();
     initAdminsAdmin();
+    initStoreAdmin();
+    initReportsAdmin();
   }
   startOrdersListener();
 });

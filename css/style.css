@@ -445,6 +445,15 @@ select.field { appearance: none; background-image: linear-gradient(45deg, transp
 .cep-status { min-height: 0; margin: var(--s-2) 0 0; font-size: var(--fs-sm); color: var(--polpa); font-weight: 500; }
 .cep-status:empty { display: none; }
 
+.pix-local-note {
+  display: flex; gap: var(--s-3); align-items: flex-start;
+  margin: var(--s-4) 0 0; padding: var(--s-3) var(--s-4);
+  background: color-mix(in srgb, var(--banana) 30%, var(--white));
+  border: var(--line); border-radius: var(--r-md); font-size: var(--fs-sm);
+}
+.pix-local-note > span { font-size: 22px; line-height: 1; }
+.pix-local-note--big { font-size: var(--fs-md); box-shadow: var(--stamp-sm); }
+
 .ticket-sum { margin: var(--s-6) 0 0; display: grid; gap: var(--s-1); font-family: var(--font-mono); }
 .ticket-sum div { display: flex; justify-content: space-between; }
 .ticket-sum dt, .ticket-sum dd { margin: 0; }

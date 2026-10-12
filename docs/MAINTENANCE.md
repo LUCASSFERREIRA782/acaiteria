@@ -24,9 +24,13 @@ Liga/desliga a entrega e define a taxa: única para todos ou por bairro (o clien
 ## Pix da loja
 Na aba **Entrega → Pix da loja**: tipo de chave, chave, nome do recebedor (até 25 letras) e cidade (até 15). Esses dados ficam protegidos no servidor e nunca aparecem no site. Troque os dados de exemplo pelos reais antes de aceitar Pix.
 
-## Horários
-Ficam em `js/config.js`. Fora do horário o cliente consegue montar a comanda, mas o envio fica bloqueado.
+## Loja e equipe
+- **Horário de funcionamento:** abertura e fechamento de cada dia da semana, ou "Fechado". Fechamento depois da meia-noite funciona (ex.: 18:00 → 01:00). Fora do horário o cliente monta a comanda, mas o envio fica bloqueado.
+- **Abrir agora / Fechar agora:** sobrepõe os horários até você voltar para "Seguir horários" (feriado, falta de produto, fim de expediente antecipado).
+- **WhatsApp da equipe:** um ou mais números. Os marcados com "Recebe pedidos" dividem os pedidos de entrega entre si, e o card do pedido mostra quem recebeu. Só esses aparecem no site; os outros ficam privados.
+- **Dados da loja:** nome, frase do topo, endereço e Instagram.
+- **Administradores:** a pessoa precisa ter conta no Firebase Authentication. Depois de liberada, ela sai e entra de novo.
 
-## Equipe e dados
-- **Dar acesso**: a pessoa precisa ter conta no Firebase Authentication. Depois de liberada, ela sai e entra de novo.
-- **Dados e privacidade**: apague periodicamente os pedidos com mais de 30 dias. Depois da migração, apague também os registros do sistema antigo.
+## Relatórios e dados
+- **Desempenho:** pedidos e faturamento por dia ou por dia da semana (7, 30 ou 90 dias), com maior faturamento, mais pedidos, maior ticket médio e o destaque "menos pedidos, mais faturamento". Passe o mouse nas colunas para ver os detalhes, ou abra "Ver tabela". Faturamento não é lucro: o custo dos produtos não é registrado.
+- **Dados e privacidade:** mostra quantos pedidos estão guardados. Apaga pedidos finalizados e cancelados com mais de 0, 7, 30 ou 90 dias; "0 dias" serve para limpar testes. Pedidos em andamento nunca são apagados. Antes de apagar, os totais do dia vão para o relatório, sem nenhum dado do cliente. Use também para apagar os registros do sistema antigo.

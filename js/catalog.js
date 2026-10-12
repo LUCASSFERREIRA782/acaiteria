@@ -19,12 +19,14 @@ async function loadCatalog() {
   try {
     if (typeof db === "undefined") throw new Error("Firebase indisponível");
 
-    const [catsSnap, prodSnap, addonsDoc, deliveryDoc] = await Promise.all([
+    const [catsSnap, prodSnap, addonsDoc, deliveryDoc, lojaDoc] = await Promise.all([
       db.collection("categorias").orderBy("ordem").get(),
       db.collection("produtos").orderBy("ordem").get(),
       db.collection("config").doc("adicionais").get(),
       db.collection("config").doc("deliveryFees").get(),
+      db.collection("config").doc("loja").get(),
     ]);
+    if (lojaDoc.exists) applyStoreConfig(lojaDoc.data());
     if (catsSnap.empty) throw new Error("Cardápio vazio no Firestore");
 
     const produtos = prodSnap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -44,6 +46,37 @@ async function loadCatalog() {
     catalog.adicionais = menu.adicionais;
     catalog.online = false;
   }
+}
+
+/** Dados da loja editados no painel (config/loja) sobrepõem o config.js. */
+function applyStoreConfig(loja) {
+  const cfg = restaurantConfig;
+  if (loja.nome) { cfg.name = loja.nome; cfg.seo.title = `${loja.nome} — Açaiteria`; }
+  if (loja.slogan) cfg.slogan = loja.slogan;
+  if (loja.endereco) cfg.address = loja.endereco;
+  if (loja.instagram) cfg.instagram = loja.instagram;
+  if (Array.isArray(loja.horarios) && loja.horarios.length) cfg.hours = loja.horarios;
+  if (Array.isArray(loja.whatsapps) && loja.whatsapps.length) {
+    cfg.whatsapps = loja.whatsapps;
+    cfg.whatsapp = loja.whatsapps[0].numero; // o primeiro é o contato do rodapé
+  }
+  cfg.statusManual = loja.statusManual || "auto";
+}
+
+/** Aberto agora? Respeita o "abrir/fechar agora" do painel. */
+function storeStatus() {
+  const manual = restaurantConfig.statusManual;
+  if (manual === "fechado") return { open: false, manual: true };
+  if (manual === "aberto") return { open: true, manual: true };
+  return openStatus(restaurantConfig.hours);
+}
+
+/** Escolhe um dos WhatsApp que recebem pedidos (divide entre a equipe). */
+function pickAttendant() {
+  const list = restaurantConfig.whatsapps?.length
+    ? restaurantConfig.whatsapps
+    : [{ nome: "", numero: restaurantConfig.whatsapp }];
+  return list[crypto.getRandomValues(new Uint32Array(1))[0] % list.length];
 }
 
 function findProduct(id) {
@@ -82,12 +115,10 @@ function renderIdentity() {
     .join("");
 
   const sticker = document.querySelector("[data-open-status]");
-  const st = openStatus(cfg.hours);
+  const st = storeStatus();
   sticker.hidden = false;
   sticker.classList.toggle("is-closed", !st.open);
-  sticker.textContent = st.open
-    ? `Aberto até ${st.until}`
-    : st.opensAt ? `Abre às ${st.opensAt}` : "Fechado hoje";
+  sticker.textContent = st.manual ? (st.open ? "Aberto agora" : "Fechado agora") : openStatusText(st);
 }
 
 function renderCategoryNav() {

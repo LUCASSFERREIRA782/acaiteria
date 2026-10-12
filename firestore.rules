@@ -28,7 +28,7 @@ service cloud.firestore {
     // altere o JavaScript do site.
     function validNewOrder(d) {
       return d.keys().hasOnly(['codigo', 'modo', 'pagamento', 'apelido', 'mesa', 'bairro',
-                               'itens', 'subtotal', 'taxaEntrega', 'total', 'status', 'pago', 'criadoEm'])
+                               'itens', 'subtotal', 'taxaEntrega', 'total', 'status', 'pago', 'criadoEm', 'atendente'])
         && d.codigo is string && d.codigo.matches('^[A-Z0-9]{4}$')
         && (
              (d.modo == 'local'   && d.pagamento in ['caixa_cartao', 'caixa_pix'] && d.bairro == '')
@@ -36,6 +36,7 @@ service cloud.firestore {
         )
         && isText(d.apelido, 30) && d.apelido.size() >= 2
         && isText(d.mesa, 10) && isText(d.bairro, 40)
+        && (!('atendente' in d) || isText(d.atendente, 30))
         && d.itens is list && d.itens.size() >= 1 && d.itens.size() <= 10
         && validItem(d.itens[0])
         && (d.itens.size() < 2  || validItem(d.itens[1]))
@@ -54,10 +55,11 @@ service cloud.firestore {
     }
 
     // ---- Cardápio e configurações: leitura pública, escrita só admin ----
-    // config/pix guarda a chave e o recebedor: só o admin lê.
-    // O código Pix do cliente é gerado pela Cloud Function gerarPix.
+    // config/pix (chave e recebedor) e config/equipe (todos os WhatsApp
+    // da equipe) são privados: só o admin lê. O site usa config/loja,
+    // que tem apenas os números marcados para receber pedidos.
     match /config/{docId} {
-      allow read: if docId != 'pix' || isAdmin();
+      allow read: if !(docId in ['pix', 'equipe']) || isAdmin();
       allow write: if isAdmin();
     }
     match /categorias/{catId} {
@@ -67,6 +69,11 @@ service cloud.firestore {
     match /produtos/{prodId} {
       allow read: if true;
       allow write: if isAdmin();
+    }
+
+    // ---- Relatórios: totais por dia, sem nenhum dado de cliente ----
+    match /relatorios/{dia} {
+      allow read, write: if isAdmin();
     }
 
     // ---- Pedidos ----

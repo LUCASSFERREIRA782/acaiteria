@@ -16,7 +16,7 @@ const ORDER_PAYMENT = {
   pix: "Pix (copia e cola)",
   maquininha: "Maquininha na entrega",
   caixa_cartao: "Cartão no caixa",
-  caixa_pix: "Pix no caixa",
+  caixa_pix: "Pix (QR Code mesa/balcão)",
 };
 
 // Próximo passo de cada status, por modalidade
@@ -124,7 +124,8 @@ function orderCardHTML(o) {
         <span class="o-time">${minutesAgo(date)}</span>
       </header>
       <div class="o-who"><strong>${esc(o.apelido || "—")}</strong>${where}</div>
-      ${o.modo === "entrega" ? `<p class="o-note">Endereço chega pelo WhatsApp com o código #${esc(o.codigo || "")}</p>` : ""}
+      ${o.modo === "entrega" ? `<p class="o-note">Endereço chega pelo WhatsApp${o.atendente ? ` de <strong>${esc(o.atendente)}</strong>` : ""} com o código #${esc(o.codigo || "")}</p>` : ""}
+      ${o.modo === "local" && o.pagamento === "caixa_pix" ? `<p class="o-note">Pix pelo QR Code da mesa/balcão: confira o comprovante</p>` : ""}
       <ul class="o-items">${items}</ul>
       <div class="o-pay">
         <span>${esc(ORDER_PAYMENT[o.pagamento] || o.pagamento || "—")}</span>

@@ -71,7 +71,20 @@ function openStatus(hours, now = new Date()) {
     const o = toMin(today.open), c = toMin(today.close);
     const inside = c > o ? nowMin >= o && nowMin < c : nowMin >= o;
     if (inside) return { open: true, until: today.close };
-    if (nowMin < o) return { open: false, opensAt: today.open };
+    if (nowMin < o) return { open: false, opensAt: today.open, opensLabel: `às ${today.open}` };
+  }
+  // Próxima abertura nos próximos dias
+  const names = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"];
+  for (let i = 1; i <= 7; i++) {
+    const day = (now.getDay() + i) % 7;
+    const next = hours.find(h => h.day === day && h.open);
+    if (next) return { open: false, opensAt: next.open, opensLabel: `${i === 1 ? "amanhã" : names[day]} às ${next.open}` };
   }
   return { open: false };
+}
+
+/** Texto curto do status, usado no site e no painel. */
+function openStatusText(st) {
+  if (st.open) return st.until ? `Aberto até ${st.until}` : "Aberto agora";
+  return st.opensLabel ? `Abre ${st.opensLabel}` : "Fechado";
 }

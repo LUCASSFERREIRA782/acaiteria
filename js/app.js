@@ -19,6 +19,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }, true);
 
   await loadCatalog();
+  renderIdentity(); // agora com horários/WhatsApp/nome vindos do painel
   renderCategoryNav();
   renderFeatured();
   renderCategories();

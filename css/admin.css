@@ -197,6 +197,66 @@ textarea.f-input { resize: vertical; }
 }
 .toast.is-visible { transform: translate(-50%, 0); opacity: 1; }
 
+/* ---------- Loja e equipe ---------- */
+.a-store-status { padding: 4px 12px; border: var(--line); border-radius: var(--r-pill); font-weight: 700; font-size: var(--fs-sm); }
+.a-store-status.is-open { background: var(--folha); color: var(--coco); border-color: var(--folha); }
+.a-store-status.is-closed { background: var(--morango); color: var(--coco); border-color: var(--morango); }
+.a-segmented { display: inline-flex; flex-wrap: wrap; border: var(--line); border-radius: var(--r-sm); overflow: hidden; background: var(--white); }
+.a-segmented label { position: relative; cursor: pointer; }
+.a-segmented label + label { border-left: var(--line); }
+.a-segmented input { position: absolute; opacity: 0; }
+.a-segmented span { display: block; padding: 8px 14px; font-weight: 600; font-size: var(--fs-sm); }
+.a-segmented input:checked + span { background: var(--ink); color: var(--coco); }
+.a-segmented input:focus-visible + span { outline: 3px solid var(--banana); outline-offset: -4px; }
+.a-segmented--sm span { padding: 6px 10px; font-size: var(--fs-xs); }
+.a-hours { display: grid; gap: var(--s-1); }
+.a-hour-row { display: grid; grid-template-columns: 140px 110px auto 110px 1fr; gap: var(--s-2); align-items: center; padding: var(--s-1) 0; border-bottom: var(--line-thin); }
+.a-hour-sep { font-size: var(--fs-sm); color: var(--ink-soft); }
+.a-hour-closed { display: none; font-size: var(--fs-sm); color: var(--morango); font-weight: 600; }
+.a-hour-row.is-closed input[type="time"], .a-hour-row.is-closed .a-hour-sep { opacity: .35; }
+.a-hour-row.is-closed .a-hour-closed { display: inline; }
+.a-whats-grid { grid-template-columns: 1fr 1.2fr 120px 36px; }
+
+/* ---------- Relatórios ---------- */
+.a-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: var(--s-3); }
+.a-kpi { background: var(--white); border: var(--line); border-radius: var(--r-md); padding: var(--s-3) var(--s-4); display: flex; flex-direction: column; }
+.a-kpi span { font-family: var(--font-mono); font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: .06em; color: var(--ink-soft); }
+.a-kpi strong { font-family: var(--font-display); font-weight: 400; font-size: var(--fs-xl); line-height: 1.2; }
+.a-insights { margin: var(--s-4) 0; }
+.a-insight-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--s-3); }
+.a-insight { background: color-mix(in srgb, var(--banana) 28%, var(--white)); border: var(--line); border-radius: var(--r-md); padding: var(--s-3) var(--s-4); display: flex; flex-direction: column; gap: 2px; }
+.a-insight span { font-family: var(--font-mono); font-size: var(--fs-xs); text-transform: uppercase; color: var(--ink-soft); }
+.a-insight strong { font-size: var(--fs-lg); }
+.a-insight small { font-size: var(--fs-sm); color: var(--ink-soft); }
+.a-insight-note { margin: var(--s-3) 0 0; padding: var(--s-3) var(--s-4); background: var(--white); border: var(--line); border-left-width: 6px; border-left-color: var(--polpa); border-radius: var(--r-sm); font-size: var(--fs-sm); }
+.a-charts { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-3); }
+.a-chart { margin: 0; padding: var(--s-4); }
+.c-title { font-weight: 700; margin-bottom: var(--s-2); }
+.c-title small { font-family: var(--font-mono); font-weight: 400; color: var(--ink-soft); margin-left: var(--s-2); }
+.c-wrap { position: relative; }
+.c-wrap svg { display: block; width: 100%; height: auto; overflow: visible; }
+.c-grid { stroke: var(--paper-deep); stroke-width: 1; }
+.c-axis { stroke: var(--ink-soft); stroke-width: 1; }
+.c-tick { font-family: var(--font-mono); font-size: 11px; fill: var(--ink-soft); }
+.c-value { font-family: var(--font-mono); font-size: 11px; font-weight: 500; fill: var(--ink); }
+.c-hit { fill: transparent; }
+.c-col.is-hover .c-hit { fill: color-mix(in srgb, var(--ink) 6%, transparent); }
+.c-tooltip { position: absolute; z-index: 2; pointer-events: none; white-space: pre-line; max-width: 260px; background: var(--ink); color: var(--coco); border-radius: var(--r-sm); padding: var(--s-2) var(--s-3); font-size: var(--fs-xs); line-height: 1.5; box-shadow: 3px 3px 0 var(--banana); }
+.a-report-table { margin-top: var(--s-3); padding: var(--s-3) var(--s-4); }
+.a-report-table summary { cursor: pointer; font-weight: 700; }
+.a-table { width: 100%; border-collapse: collapse; margin-top: var(--s-3); font-size: var(--fs-sm); }
+.a-table th, .a-table td { padding: 6px 8px; text-align: right; border-bottom: var(--line-thin); }
+.a-table th:first-child, .a-table td:first-child { text-align: left; }
+.a-table th { font-family: var(--font-mono); font-size: var(--fs-xs); text-transform: uppercase; color: var(--ink-soft); font-weight: 500; }
+.a-table td { font-variant-numeric: tabular-nums; }
+
+/* ---------- Privacidade ---------- */
+.a-privacy-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: var(--s-2); margin: var(--s-3) 0; }
+.a-privacy-grid div { background: var(--paper); border: var(--line-thin); border-radius: var(--r-sm); padding: var(--s-2) var(--s-3); display: flex; flex-direction: column; }
+.a-privacy-grid strong { font-family: var(--font-display); font-weight: 400; font-size: var(--fs-xl); line-height: 1.1; }
+.a-privacy-grid span { font-size: var(--fs-xs); color: var(--ink-soft); }
+.a-inline-label { display: flex; align-items: center; gap: var(--s-2); margin-top: var(--s-2); font-size: var(--fs-sm); }
+
 @keyframes arrive { from { transform: scale(.94); opacity: 0; } to { transform: none; opacity: 1; } }
 
 @media (max-width: 760px) {
@@ -211,4 +271,8 @@ textarea.f-input { resize: vertical; }
   .a-addon-grid { grid-template-columns: 1fr 1fr 80px 36px; }
   .a-photo-field { grid-template-columns: 96px 1fr; }
   .a-photo-preview { width: 96px; height: 96px; }
+  .a-charts { grid-template-columns: 1fr; }
+  .a-hour-row { grid-template-columns: 1fr 96px auto 96px; }
+  .a-hour-closed { grid-column: 2 / -1; }
+  .a-whats-grid { grid-template-columns: 1fr 1fr 70px 36px; }
 }

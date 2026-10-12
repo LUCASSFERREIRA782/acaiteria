@@ -22,13 +22,13 @@ const PAYMENT_OPTIONS = {
   ],
   local: [
     { id: "caixa_cartao", label: "Cartão no caixa", hint: "Débito ou crédito" },
-    { id: "caixa_pix",    label: "Pix no caixa",    hint: "QR Code no balcão" },
+    { id: "caixa_pix",    label: "Pix pelo QR Code", hint: "Escaneie o QR Code Pix da mesa ou do balcão" },
   ],
 };
 
 const PAYMENT_LABELS = {
   pix: "Pix", maquininha: "Maquininha na entrega",
-  caixa_cartao: "Cartão no caixa", caixa_pix: "Pix no caixa",
+  caixa_cartao: "Cartão no caixa", caixa_pix: "Pix (QR Code da mesa/balcão)",
 };
 
 const checkout = {
@@ -96,7 +96,7 @@ function renderOrderBody() {
   const d = catalog.delivery;
   const fee = deliveryFee();
   const subtotal = cartSubtotal();
-  const status = openStatus(restaurantConfig.hours);
+  const status = storeStatus();
 
   const itemsHTML = cart.items.map((item, i) => `
     <li class="ticket-item">
@@ -182,7 +182,7 @@ function renderOrderBody() {
   const blocked = !catalog.online
     ? `<p class="notice">Pedidos pelo site estão fora do ar. Chame a gente no <a href="https://wa.me/${esc(restaurantConfig.whatsapp)}" target="_blank" rel="noopener">WhatsApp</a>.</p>`
     : !status.open
-    ? `<p class="notice">Estamos fechados agora${status.opensAt ? ` e abrimos às ${esc(status.opensAt)}` : ""}. Dá para montar a comanda, mas o envio só abre no horário.</p>`
+    ? `<p class="notice">Estamos fechados agora${status.opensLabel ? ` e abrimos ${esc(status.opensLabel)}` : ""}. Dá para montar a comanda, mas o envio só abre no horário.</p>`
     : "";
 
   body.innerHTML = `
@@ -221,6 +221,10 @@ function renderOrderBody() {
             </label>`).join("")}
         </div>
       </fieldset>
+
+      ${checkout.modo === "local" && checkout.pagamento === "caixa_pix"
+        ? `<p class="pix-local-note"><span aria-hidden="true">▣</span> Depois de enviar, pague escaneando o <strong>QR Code Pix da sua mesa ou do balcão</strong> e mostre o comprovante no caixa com o código do pedido.</p>`
+        : ""}
 
       <dl class="ticket-sum">
         <div><dt>Subtotal</dt><dd>${money(subtotal)}</dd></div>
@@ -296,6 +300,7 @@ async function submitOrder() {
   const fee = deliveryFee();
   const subtotal = round2(cartSubtotal());
   const code = shortOrderCode();
+  const attendant = checkout.modo === "entrega" ? pickAttendant() : null;
 
   // Exatamente estes campos — as regras do Firestore recusam qualquer outro.
   const order = {
@@ -320,6 +325,7 @@ async function submitOrder() {
     pago: false,
     criadoEm: firebase.firestore.FieldValue.serverTimestamp(),
   };
+  if (attendant?.nome) order.atendente = attendant.nome.slice(0, 30);
 
   try {
     const ref = await db.collection("pedidos").add(order);
@@ -327,7 +333,8 @@ async function submitOrder() {
     wipeAddress();       // endereço já foi copiado para a mensagem; some da memória
     checkout.mesa = "";
     clearCart();
-    startTracking({ id: ref.id, code, modo: order.modo, pagamento: order.pagamento, total: order.total, whatsText });
+    startTracking({ id: ref.id, code, modo: order.modo, pagamento: order.pagamento, total: order.total, whatsText,
+      whatsNumber: attendant?.numero || restaurantConfig.whatsapp });
   } catch (err) {
     console.error(err);
     checkout.sending = false;
@@ -544,10 +551,12 @@ function renderTrackingBody() {
     ? `<p class="done-lead"><strong>Falta um passo:</strong> envie o endereço pelo WhatsApp para a gente sair com o seu pedido.</p>
        ${pix}
        ${o.whatsText
-         ? `<a class="btn btn--whats btn--block" data-send-whats target="_blank" rel="noopener" href="https://wa.me/${esc(restaurantConfig.whatsapp)}?text=${encodeURIComponent(o.whatsText)}">Enviar endereço no WhatsApp</a>`
+         ? `<a class="btn btn--whats btn--block" data-send-whats target="_blank" rel="noopener" href="https://wa.me/${esc(o.whatsNumber)}?text=${encodeURIComponent(o.whatsText)}">Enviar endereço no WhatsApp</a>`
          : `<p class="privacy-note">Endereço enviado ✓ (e já apagado deste aparelho).</p>`}
        ${o.pagamento === "maquininha" ? `<p class="hint">O entregador leva a maquininha. Débito ou crédito.</p>` : ""}`
-    : `<p class="done-lead">Pague no caixa com <strong>${o.pagamento === "caixa_pix" ? "Pix" : "cartão"}</strong> e informe o código <strong>#${esc(o.code)}</strong>.</p>`;
+    : o.pagamento === "caixa_pix"
+    ? `<div class="pix-local-note pix-local-note--big"><span aria-hidden="true">▣</span><div><strong>Pague com Pix pelo QR Code</strong> da sua mesa ou do balcão. Depois mostre o comprovante no caixa e diga o código <strong>#${esc(o.code)}</strong>.</div></div>`
+    : `<p class="done-lead">Pague no caixa com <strong>cartão</strong> e informe o código <strong>#${esc(o.code)}</strong>.</p>`;
 
   body.innerHTML = `
     <header class="ticket-head">
