@@ -20,7 +20,7 @@ async function grantAdmin(e) {
     input.value = "";
     loadAdmins();
   } catch (err) {
-    alert("Erro: " + err.message);
+    alert("Erro: " + serverMessage(err));
   }
 }
 
@@ -51,7 +51,7 @@ async function revokeAdmin(e) {
     await firebase.functions().httpsCallable("revogarAdmin")({ uid: btn.dataset.uid });
     loadAdmins();
   } catch (err) {
-    alert("Erro: " + err.message);
+    alert("Erro: " + serverMessage(err));
   }
 }
 

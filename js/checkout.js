@@ -330,7 +330,7 @@ async function submitOrder() {
     // Mensagens do servidor (loja fechada, esgotado, bairro…) já vêm em português
     const known = ["invalid-argument", "failed-precondition"].some(c => String(err.code).includes(c));
     document.getElementById("checkout-error").textContent = known
-      ? err.message
+      ? serverMessage(err)
       : "Não conseguimos enviar o pedido. Confira sua internet e tente de novo.";
     return;
   }

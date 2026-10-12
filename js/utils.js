@@ -24,6 +24,12 @@ function safeUrl(url) {
   return /^https?:\/\//i.test(url || "") ? url : "";
 }
 
+/** Mensagem de erro das Cloud Functions pronta para a tela.
+ *  O SDK 12 acrescenta o status HTTP no fim ("... [400]"); o cliente não precisa ver isso. */
+function serverMessage(err) {
+  return String(err?.message || "").replace(/\s*\[\d{3}\]\s*$/, "");
+}
+
 function showToast(msg) {
   const el = document.getElementById("toast");
   if (!el) return;
