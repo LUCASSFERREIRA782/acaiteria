@@ -487,7 +487,7 @@ function renderTrackingBody() {
         return `
           <div class="pix-box">
             <span class="pix-title">Pix de ${money(o.total)}</span>
-            <code class="pix-code" id="pix-code">${esc(code)}</code>
+            <code class="pix-code" id="pix-code"></code>
             <button type="button" class="btn btn--banana btn--block" data-copy-pix>Copiar código Pix</button>
             <span class="pix-meta">Recebedor: ${esc(restaurantConfig.pix.receiverName)} · Chave (${esc(restaurantConfig.pix.keyType)})</span>
           </div>`;
