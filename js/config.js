@@ -22,7 +22,7 @@ const restaurantConfig = {
     { label: "Quinta",  day: 4, open: "13:00", close: "22:00" },
     { label: "Sexta",   day: 5, open: "13:00", close: "23:30" },
     { label: "Sábado",  day: 6, open: "12:00", close: "23:30" },
-    { label: "Domingo", day: 0, open: "12:00", close: "21:00" },
+    { label: "Domingo", day: 0, open: "12:00", close: "23:00" },
   ],
 
   // Usado para gerar o Pix "copia e cola" com o valor já preenchido
