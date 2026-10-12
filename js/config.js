@@ -10,7 +10,7 @@ const restaurantConfig = {
   name: "Roxo da Vila",
   slogan: "Açaí batido na hora, desde a primeira colherada",
 
-  whatsapp: "5511977777777",            // só números, com DDI 55
+  whatsapp: "5511994201654",            // só números, com DDI 55
   instagram: "https://instagram.com/roxodavila",
   address: "Vila Luzita, Santo André — SP",
 
@@ -28,8 +28,8 @@ const restaurantConfig = {
   // Usado para gerar o Pix "copia e cola" com o valor já preenchido
   // (só no pedido de entrega — na loja o Pix é feito no caixa).
   pix: {
-    key: "+5511977777777",   // telefone com +55, e-mail, CPF/CNPJ ou chave aleatória
-    keyType: "Telefone",
+    key: "00020101021126410014br.gov.bcb.pix0119lucaz6846@gmail.com5204000053039865802BR5923LUCAS FERREIRA DA SILVA6011SANTO ANDRE62070503***6304FA04",   // telefone com +55, e-mail, CPF/CNPJ ou chave aleatória
+    keyType: "Aleatória",
     receiverName: "ROXO DA VILA",  // até 25 caracteres, sem acento
     city: "SANTO ANDRE",           // até 15 caracteres, sem acento
   },
