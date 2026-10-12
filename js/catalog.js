@@ -71,14 +71,6 @@ function storeStatus() {
   return openStatus(restaurantConfig.hours);
 }
 
-/** Escolhe um dos WhatsApp que recebem pedidos (divide entre a equipe). */
-function pickAttendant() {
-  const list = restaurantConfig.whatsapps?.length
-    ? restaurantConfig.whatsapps
-    : [{ nome: "", numero: restaurantConfig.whatsapp }];
-  return list[crypto.getRandomValues(new Uint32Array(1))[0] % list.length];
-}
-
 function findProduct(id) {
   for (const cat of catalog.categorias) {
     const p = cat.produtos.find(x => x.id === id);

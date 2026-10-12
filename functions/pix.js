@@ -55,7 +55,7 @@ function pixCopiaECola({ key, receiverName, city }, amount, txid) {
 
 exports.pixCopiaECola = pixCopiaECola; // usado nos testes
 
-exports.gerarPix = onCall(async request => {
+exports.gerarPix = onCall({ maxInstances: 5 }, async request => {
   const orderId = String(request.data?.orderId || "");
   if (!/^[A-Za-z0-9]{10,40}$/.test(orderId)) throw new HttpsError("invalid-argument", "Pedido inválido.");
 

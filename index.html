@@ -7,6 +7,8 @@
 <meta name="description" content="Cardápio digital da açaiteria.">
 <meta name="theme-color" content="#2A0B24">
 <meta name="referrer" content="strict-origin-when-cross-origin">
+<!-- Política de segurança: a página só carrega/conversa com estes servidores. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://firebasestorage.googleapis.com; connect-src 'self' https://firestore.googleapis.com https://us-central1-menu-digital-md3.cloudfunctions.net https://viacep.com.br https://brasilapi.com.br; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'">
 
 <meta property="og:title" content="Roxo da Vila — Açaiteria">
 <meta property="og:description" content="Açaí batido na hora, do seu jeito. Peça para entrega ou consuma aqui.">
@@ -19,10 +21,11 @@
 <link rel="stylesheet" href="css/tokens.css">
 <link rel="stylesheet" href="css/style.css">
 
-<!-- Firebase SDKs (compat) -->
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-functions-compat.js"></script>
+<!-- Firebase SDKs (compat). integrity = impressão digital do arquivo: se alguém
+     alterar o script no servidor, o navegador se recusa a executar. -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js" integrity="sha384-sEVIly94UBRLKWdkYoPpSG7GD/e79YHMrxVyZaOk712Ga7+EAw6w1EFi+xBzBdd+" crossorigin="anonymous"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js" integrity="sha384-M481iNZJtbpypKgvlvZ+78Giq0BsewFLk5r2k+MOcGXlwKCc27DQRZ+WCV/zpmpC" crossorigin="anonymous"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-functions-compat.js" integrity="sha384-3IYu+dnH2y9gX1s6p9F4D55XbEmZBfJ3D1Ylh8J6bfdqnJCOmDVSRTq1yhJsBY1H" crossorigin="anonymous"></script>
 <script src="js/firebase-config.js"></script>
 </head>
 <body>

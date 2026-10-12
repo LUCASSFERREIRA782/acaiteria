@@ -50,13 +50,6 @@ async function copyText(text) {
   }
 }
 
-/** Código curto do pedido, fácil de falar no balcão (sem 0/O/1/I). */
-function shortOrderCode() {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  const bytes = crypto.getRandomValues(new Uint8Array(4));
-  return [...bytes].map(b => chars[b % chars.length]).join("");
-}
-
 /** Está aberto agora? Considera fechamento depois da meia-noite. */
 function openStatus(hours, now = new Date()) {
   const toMin = t => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };

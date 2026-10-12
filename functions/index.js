@@ -22,3 +22,6 @@ exports.revogarAdmin = admins.revogarAdmin;
 
 const pix = require("./pix");
 exports.gerarPix = pix.gerarPix;
+
+const pedidos = require("./pedidos");
+exports.criarPedido = pedidos.criarPedido;

@@ -11,7 +11,8 @@
  *
  * USO:
  *   1. npm install  (dentro de scripts/)
- *   2. Coloque o service-account.json nesta pasta
+ *   2. Salve a chave em C:\Users\<você>\.firebase-keys\menu-digital-md3.json
+ *      (fora do projeto e do OneDrive; ou defina FIREBASE_SA com outro caminho)
  *   3. node set-admin.js email@dominio.com "Nome do Admin"
  * -------------------------------------------------------
  */
@@ -23,7 +24,17 @@ const { getFirestore, FieldValue } = require("firebase-admin/firestore");
 const path = require("path");
 
 // ---- 1. Inicializa o Admin SDK ----
-const serviceAccount = require(path.resolve(__dirname, "service-account.json"));
+// A chave fica FORA do projeto e do OneDrive (não sincroniza, não vai pro Git).
+// Para usar outro lugar: defina a variável FIREBASE_SA com o caminho do arquivo.
+const os = require("os");
+const keyPath = process.env.FIREBASE_SA || path.join(os.homedir(), ".firebase-keys", "menu-digital-md3.json");
+let serviceAccount;
+try {
+  serviceAccount = require(keyPath);
+} catch {
+  console.error(`❌ Chave não encontrada em ${keyPath}\n   Baixe em Console Firebase → Configurações → Contas de serviço → Gerar nova chave privada.`);
+  process.exit(1);
+}
 
 initializeApp({
   credential: cert(serviceAccount),

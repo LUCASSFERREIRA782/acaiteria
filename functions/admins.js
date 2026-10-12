@@ -15,7 +15,7 @@ function requireAdmin(request) {
   if (!request.auth.token.admin) throw new HttpsError("permission-denied", "Apenas administradores.");
 }
 
-exports.concederAdmin = onCall(async request => {
+exports.concederAdmin = onCall({ maxInstances: 3 }, async request => {
   requireAdmin(request);
 
   const email = String(request.data?.email || "").trim().toLowerCase();
@@ -45,7 +45,7 @@ exports.concederAdmin = onCall(async request => {
   return { success: true, uid: user.uid };
 });
 
-exports.revogarAdmin = onCall(async request => {
+exports.revogarAdmin = onCall({ maxInstances: 3 }, async request => {
   requireAdmin(request);
 
   const uid = String(request.data?.uid || "");

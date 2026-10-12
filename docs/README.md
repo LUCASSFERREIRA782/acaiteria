@@ -57,12 +57,12 @@ _legado/                arquivos da versão anterior (pode apagar)
 
 1. Edite `js/config.js` (nome, WhatsApp, horários). A chave Pix vai no painel, não no código.
 2. Publique as regras: `firebase deploy --only firestore:rules,storage`
-3. Crie o primeiro admin (uma vez): `cd scripts && npm install && node set-admin.js voce@email.com "Seu Nome"`
+3. Crie o primeiro admin (uma vez): `cd scripts && npm install && node set-admin.js voce@email.com "Seu Nome"`. O script lê a chave de serviço em `C:\Users\<você>\.firebase-keys\menu-digital-md3.json`, fora do projeto e do OneDrive. Nunca coloque essa chave na pasta do projeto nem no GitHub.
 4. Entre em `/admin`, abra o console (F12), cole `data/menu.js` e depois `data/seed.js`.
 5. Envie as fotos dos produtos pelo painel (**Cardápio → Editar**).
 6. Publique o site: `firebase deploy --only hosting,functions`
 
-> `scripts/service-account.json` é uma chave secreta. Ele está no `.gitignore` e fica fora do Hosting (`firebase.json`). Nunca envie esse arquivo para o GitHub.
+> A chave de serviço (acesso total ao Firebase) fica em `C:SERS<VOCê>.FIREBASE-KEYSMENU-DIGITAL-MD3.JSON`, FORA DO PROJETO E DO ONEDRIVE. NUNCA COLOQUE ESSE ARQUIVO NA PASTA DO PROJETO NEM NO GITHUB.
 
 ## Testar localmente
 

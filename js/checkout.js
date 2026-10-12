@@ -297,50 +297,41 @@ async function submitOrder() {
   checkout.sending = true;
   renderOrderBody();
 
-  const fee = deliveryFee();
-  const subtotal = round2(cartSubtotal());
-  const code = shortOrderCode();
-  const attendant = checkout.modo === "entrega" ? pickAttendant() : null;
-
-  // Exatamente estes campos — as regras do Firestore recusam qualquer outro.
-  const order = {
-    codigo: code,
+  // Só as ESCOLHAS vão para o servidor. Preços, taxa e código do pedido
+  // são definidos pela Cloud Function criarPedido (o navegador não manda valores).
+  const request = {
     modo: checkout.modo,
     pagamento: checkout.pagamento,
     apelido: checkout.apelido.trim().slice(0, 30),
     mesa: checkout.modo === "local" ? checkout.mesa.trim().slice(0, 10) : "",
     bairro: checkout.modo === "entrega" ? (checkout.bairro || "").slice(0, 40) : "",
     itens: cart.items.map(i => ({
-      nome: i.name.slice(0, 80),
+      productId: i.productId,
       tamanho: i.size,
       adicionais: i.addons.map(a => a.name),
       obs: i.obs,
       qtd: i.qty,
-      unit: round2(i.unit),
     })),
-    subtotal,
-    taxaEntrega: round2(fee),
-    total: round2(subtotal + fee),
-    status: "novo",
-    pago: false,
-    criadoEm: firebase.firestore.FieldValue.serverTimestamp(),
   };
-  if (attendant?.nome) order.atendente = attendant.nome.slice(0, 30);
 
   try {
-    const ref = await db.collection("pedidos").add(order);
+    const { data } = await firebase.functions().httpsCallable("criarPedido")(request);
+    const order = { ...request, ...data, codigo: data.codigo };
     const whatsText = order.modo === "entrega" ? buildWhatsMessage(order) : "";
     wipeAddress();       // endereço já foi copiado para a mensagem; some da memória
     checkout.mesa = "";
     clearCart();
-    startTracking({ id: ref.id, code, modo: order.modo, pagamento: order.pagamento, total: order.total, whatsText,
-      whatsNumber: attendant?.numero || restaurantConfig.whatsapp });
+    startTracking({ id: data.id, code: data.codigo, modo: order.modo, pagamento: order.pagamento, total: data.total, whatsText,
+      whatsNumber: data.atendente?.numero || restaurantConfig.whatsapp });
   } catch (err) {
     console.error(err);
     checkout.sending = false;
     renderOrderBody();
-    document.getElementById("checkout-error").textContent =
-      "Não conseguimos enviar o pedido. Confira sua internet e tente de novo.";
+    // Mensagens do servidor (loja fechada, esgotado, bairro…) já vêm em português
+    const known = ["invalid-argument", "failed-precondition"].some(c => String(err.code).includes(c));
+    document.getElementById("checkout-error").textContent = known
+      ? err.message
+      : "Não conseguimos enviar o pedido. Confira sua internet e tente de novo.";
     return;
   }
   checkout.sending = false;
