@@ -162,24 +162,41 @@ function openProductBuilder(p) {
 
 function setupCategoryNav() {
   const nav = document.getElementById("category-nav");
+  const track = nav.querySelector(".cat-nav-track");
   const sections = [...document.querySelectorAll(".category")];
+  let jumpingUntil = 0; // durante o "pulo" do clique, o destaque não muda
+
+  const setActive = slug => {
+    nav.querySelectorAll(".cat-chip").forEach(b => {
+      const active = b.dataset.catLink === slug;
+      b.classList.toggle("is-active", active);
+      // Desliza SÓ a barra de categorias (na horizontal). Não usar
+      // scrollIntoView aqui: ele também mexe na rolagem da página e
+      // trava o dedo/mouse do cliente a cada categoria que passa.
+      if (active) {
+        const left = b.offsetLeft - (track.clientWidth - b.offsetWidth) / 2;
+        track.scrollTo({ left: Math.max(0, left), behavior: "smooth" });
+      }
+    });
+  };
 
   nav.addEventListener("click", e => {
     const btn = e.target.closest("[data-cat-link]");
     if (!btn) return;
-    document.getElementById(`cat-${btn.dataset.catLink}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    const section = document.getElementById(`cat-${btn.dataset.catLink}`);
+    if (!section) return;
+    const offset = nav.getBoundingClientRect().bottom + 8; // topo fixo + barra de categorias
+    const top = section.getBoundingClientRect().top + window.scrollY - offset;
+    jumpingUntil = Date.now() + 900;
+    setActive(btn.dataset.catLink);
+    window.scrollTo({ top, behavior: "smooth" });
   });
 
   if (!("IntersectionObserver" in window) || !sections.length) return;
   const observer = new IntersectionObserver(entries => {
+    if (Date.now() < jumpingUntil) return;
     entries.forEach(entry => {
-      if (!entry.isIntersecting) return;
-      const slug = entry.target.id.replace("cat-", "");
-      nav.querySelectorAll(".cat-chip").forEach(b => {
-        const active = b.dataset.catLink === slug;
-        b.classList.toggle("is-active", active);
-        if (active) b.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
-      });
+      if (entry.isIntersecting) setActive(entry.target.id.replace("cat-", ""));
     });
   }, { rootMargin: "-40% 0px -55% 0px" });
   sections.forEach(s => observer.observe(s));
