@@ -52,14 +52,17 @@
   <!-- ABA: PEDIDOS -->
   <div class="a-pane is-active" id="tab-pedidos">
     <div class="a-toolbar">
-      <h2>Pedidos de hoje</h2>
+      <h2>Pedidos</h2>
       <div class="a-toolbar-right">
         <label class="a-switch"><input type="checkbox" id="sound-toggle" checked><span>Som de novo pedido</span></label>
-        <select class="f-input f-input--sm" id="orders-range">
-          <option value="hoje">Hoje</option>
+        <select class="f-input f-input--sm" id="orders-range" aria-label="Período dos pedidos">
+          <option value="1">Hoje</option>
+          <option value="2">Ontem e hoje</option>
           <option value="7">Últimos 7 dias</option>
+          <option value="30">Últimos 30 dias</option>
         </select>
       </div>
+      <p class="a-hint">Pedidos em andamento aparecem sempre, de qualquer dia. O período vale para os finalizados. Todos ficam guardados no banco até você apagar em "Relatórios e dados".</p>
     </div>
     <div class="board" id="orders-board">
       <section class="board-col" data-col="novo"><h3>Novos</h3><div class="board-list"></div></section>

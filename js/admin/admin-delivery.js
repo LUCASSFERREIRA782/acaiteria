@@ -21,7 +21,7 @@ const PIX_HINTS = {
   email: "O e-mail cadastrado como chave no banco.",
   cpf: "Só os 11 números.",
   cnpj: "Só os 14 números.",
-  aleatoria: "A chave de 32 caracteres com hífens que o banco gerou.",
+  aleatoria: "Cole a chave aleatória do app do banco (32 letras/números, com ou sem hífens). Também pode colar o código Pix copia e cola inteiro.",
 };
 
 function updatePixHint() {
@@ -39,33 +39,104 @@ async function loadPixConfig() {
   updatePixHint();
 }
 
+/** Tira o "lixo" que vem ao copiar do app do banco: espaços, quebras de
+ *  linha, caracteres invisíveis e hífens tipográficos (– — ‐ −). */
+function cleanPixInput(raw) {
+  return String(raw)
+    .replace(/[​-‍⁠﻿]/g, "")
+    .replace(/[‐-―−﹘﹣－]/g, "-")
+    .replace(/\s+/g, "");
+}
+
+/** Se colaram o "copia e cola" inteiro, extrai chave, nome e cidade do BR Code. */
+function parseBrCode(code) {
+  const fields = {};
+  const read = (str, into) => {
+    for (let i = 0; i + 4 <= str.length;) {
+      const id = str.slice(i, i + 2), len = Number(str.slice(i + 2, i + 4));
+      if (!Number.isInteger(len)) break;
+      into[id] = str.slice(i + 4, i + 4 + len);
+      i += 4 + len;
+    }
+    return into;
+  };
+  read(code, fields);
+  const account = read(fields["26"] || "", {});
+  if (!/^br\.gov\.bcb\.pix$/i.test(account["00"] || "") || !account["01"]) return null;
+  return { key: account["01"], receiverName: fields["59"] || "", city: fields["60"] || "" };
+}
+
+/** Descobre o tipo pela aparência da chave (para corrigir seleção errada). */
+function detectPixType(key) {
+  const digits = key.replace(/\D/g, "");
+  if (/^[^@]+@[^@]+\.[^@]+$/.test(key)) return "email";
+  if (/^[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}$/i.test(key)) return "aleatoria";
+  if (key.startsWith("+55") || ((digits.length === 10 || digits.length === 11) && /^[1-9]{2}9?\d{8}$/.test(digits) && !/[.\/]/.test(key))) return "telefone";
+  if (digits.length === 14) return "cnpj";
+  if (digits.length === 11) return "cpf";
+  return null;
+}
+
 /** Normaliza a chave no formato que o Banco Central exige no BR Code. */
 function normalizePixKey(type, raw) {
-  const v = raw.trim();
+  const v = cleanPixInput(raw);
   const digits = v.replace(/\D/g, "");
   if (type === "telefone") return digits.length === 10 || digits.length === 11 ? "+55" + digits : digits.length === 13 && digits.startsWith("55") ? "+" + digits : null;
   if (type === "cpf") return digits.length === 11 ? digits : null;
   if (type === "cnpj") return digits.length === 14 ? digits : null;
-  if (type === "email") return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ? v.toLowerCase() : null;
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v) ? v.toLowerCase() : null;
+  if (type === "email") return /^[^@]+@[^@]+\.[^@]+$/.test(v) ? v.toLowerCase() : null;
+  // Aleatória (EVP): 32 caracteres hexadecimais, com ou sem hífens → 8-4-4-4-12
+  const hex = v.replace(/-/g, "").toLowerCase();
+  return /^[0-9a-f]{32}$/.test(hex) ? `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}` : null;
 }
 
 async function savePixConfig(e) {
   e.preventDefault();
   const errorEl = document.getElementById("pix-error");
+  const typeEl = document.getElementById("pix-key-type");
+  const keyEl = document.getElementById("pix-key");
+  const nameEl = document.getElementById("pix-name");
+  const cityEl = document.getElementById("pix-city");
   errorEl.textContent = "";
-  const keyType = document.getElementById("pix-key-type").value;
-  const key = normalizePixKey(keyType, document.getElementById("pix-key").value);
+
+  let raw = keyEl.value;
+  let keyType = typeEl.value;
+  const notes = [];
+
+  // Colou o código copia e cola inteiro? Aproveita chave, nome e cidade.
+  const cleaned = cleanPixInput(raw);
+  if (/br\.gov\.bcb\.pix/i.test(cleaned)) {
+    // No BR Code os espaços fazem parte do nome: tira só quebras de linha e invisíveis
+    const parsed = parseBrCode(String(raw).replace(/[​-‍⁠﻿\r\n]/g, "").trim());
+    if (!parsed) { errorEl.textContent = "Não consegui ler esse código Pix. Cole só a chave."; return; }
+    raw = parsed.key;
+    if (!nameEl.value.trim() && parsed.receiverName) nameEl.value = parsed.receiverName.slice(0, 25);
+    if (!cityEl.value.trim() && parsed.city) cityEl.value = parsed.city.slice(0, 15);
+    notes.push("chave extraída do código copia e cola");
+  }
+
+  let key = normalizePixKey(keyType, raw);
+  if (!key) {
+    // Tipo selecionado errado? Tenta pelo formato da chave.
+    const guess = detectPixType(cleanPixInput(raw));
+    const alt = guess && normalizePixKey(guess, raw);
+    if (alt) {
+      key = alt;
+      keyType = guess;
+      typeEl.value = guess;
+      updatePixHint();
+      notes.push(`tipo ajustado para "${typeEl.selectedOptions[0].textContent}"`);
+    }
+  }
   if (!key) { errorEl.textContent = "Chave inválida para o tipo escolhido. " + PIX_HINTS[keyType]; return; }
 
-  await db.collection("config").doc("pix").set({
-    keyType,
-    key,
-    receiverName: document.getElementById("pix-name").value.trim(),
-    city: document.getElementById("pix-city").value.trim(),
-    atualizadoEm: ts(),
-  });
-  showToast("Pix salvo");
+  const receiverName = nameEl.value.trim();
+  const city = cityEl.value.trim();
+  if (!receiverName || !city) { errorEl.textContent = "Preencha o nome do recebedor e a cidade."; return; }
+
+  keyEl.value = keyType === "telefone" ? key.replace(/^\+55/, "") : key;
+  await db.collection("config").doc("pix").set({ keyType, key, receiverName, city, atualizadoEm: ts() });
+  showToast(notes.length ? `Pix salvo (${notes.join("; ")})` : "Pix salvo");
 }
 
 async function loadDeliveryConfig() {
