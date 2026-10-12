@@ -3,7 +3,7 @@
 // Carregue este arquivo depois dos SDKs e antes de qualquer outro script.
 
 const firebaseConfig = {
-  apiKey: "AIzaSyClNUKii5RoRcfD7FU2ho43oJB53kAjn9o",
+  apiKey: "AIzaSyC1DcnaG7bSUxxqi7ApWInZm9dQn3vLF6A",
   authDomain: "menu-digital-md3.firebaseapp.com",
   projectId: "menu-digital-md3",
   storageBucket: "menu-digital-md3.firebasestorage.app",
