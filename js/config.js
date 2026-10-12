@@ -10,16 +10,16 @@ const restaurantConfig = {
   name: "Roxo da Vila",
   slogan: "Açaí batido na hora, desde a primeira colherada",
 
-  whatsapp: "5511994201654",            // só números, com DDI 55
+  whatsapp: "5511994201652",            // só números, com DDI 55
   instagram: "https://instagram.com/roxodavila",
   address: "Vila Luzita, Santo André — SP",
 
   // day: 0 = domingo … 6 = sábado. Sem "open" = fechado.
   hours: [
-    { label: "Segunda", day: 1, open: "13:00", close: "22:00" },
+    { label: "Segunda", day: 1, open: "08:00", close: "22:00" },
     { label: "Terça",   day: 2, open: "13:00", close: "22:00" },
     { label: "Quarta",  day: 3, open: "13:00", close: "22:00" },
-    { label: "Quinta",  day: 4, open: "13:00", close: "22:00" },
+    { label: "Quinta",  day: 4, open: "08:00", close: "22:00" },
     { label: "Sexta",   day: 5, open: "13:00", close: "23:30" },
     { label: "Sábado",  day: 6, open: "12:00", close: "23:30" },
     { label: "Domingo", day: 0, open: "12:00", close: "23:00" },
