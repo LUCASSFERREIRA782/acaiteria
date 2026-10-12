@@ -185,7 +185,9 @@ function setupCategoryNav() {
     if (!btn) return;
     const section = document.getElementById(`cat-${btn.dataset.catLink}`);
     if (!section) return;
-    const offset = nav.getBoundingClientRect().bottom + 8; // topo fixo + barra de categorias
+    // Altura que fica fixa no topo DEPOIS da rolagem (topo + barra de categorias),
+    // e não a posição atual da barra, que ainda está abaixo do banner.
+    const offset = (parseFloat(getComputedStyle(nav).top) || 0) + nav.offsetHeight + 8;
     const top = section.getBoundingClientRect().top + window.scrollY - offset;
     jumpingUntil = Date.now() + 900;
     setActive(btn.dataset.catLink);
