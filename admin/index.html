@@ -7,7 +7,7 @@
 <!-- Envia só o domínio (sem o caminho) nas chamadas ao Google: a chave de API
      com restrição de sites precisa dele para liberar o login. -->
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://firebasestorage.googleapis.com; connect-src 'self' https://firestore.googleapis.com https://firebasestorage.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://us-central1-menu-digital-md3.cloudfunctions.net; frame-src https://menu-digital-md3.firebaseapp.com; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://www.google.com/recaptcha/; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://firebasestorage.googleapis.com; connect-src 'self' https://content-firebaseappcheck.googleapis.com https://www.google.com/recaptcha/ https://firestore.googleapis.com https://firebasestorage.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://us-central1-menu-digital-md3.cloudfunctions.net; frame-src https://menu-digital-md3.firebaseapp.com https://www.google.com/recaptcha/ https://recaptcha.google.com/recaptcha/; object-src 'none'; base-uri 'self'; form-action 'self'">
 <script src="../js/frame-guard.js"></script>
 <meta name="theme-color" content="#2A0B24">
 <title>Painel — Açaiteria</title>
@@ -370,6 +370,7 @@
 
 <!-- Firebase SDKs -->
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js" integrity="sha384-aUtWR1iCiOCHS8pn1nKNXMZm3I/eDrV63IXWXgE+mHHqJfYTWYV+jGk0sCXz57+U" crossorigin="anonymous"></script>
+<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-check-compat.js" integrity="sha384-B/AP4FGRp30uqxiGDJ1XO7TvHcPxaZEPR798W+ASc3xztnppTUQe2E0ThTTM2+FH" crossorigin="anonymous"></script>
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-compat.js" integrity="sha384-jxdN9nS+cvQavyzo/bNcMoHfxvk0kWtPAfPDRq3EQ/wvbCVLNheaVIphKWMD4/g0" crossorigin="anonymous"></script>
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js" integrity="sha384-ZRqyA8Xkw0A6FmVya9A0Werzt9yjKKAp2TCzqVJjHK1O3oyb0z9jMxpkWPVoFtUm" crossorigin="anonymous"></script>
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-storage-compat.js" integrity="sha384-nNs8DM4COXkW2uHOT9mIlScMz9tx/2JavS9iQLJPV8ETY6DmCVqvy25wR7b17hvu" crossorigin="anonymous"></script>

@@ -13,6 +13,8 @@
 
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { getFirestore } = require("firebase-admin/firestore");
+const { limitarPix } = require("./limites");
+const { OPCOES_PUBLICAS } = require("./seguranca");
 
 function field(id, value) {
   return id + String(value.length).padStart(2, "0") + value;
@@ -55,9 +57,10 @@ function pixCopiaECola({ key, receiverName, city }, amount, txid) {
 
 exports.pixCopiaECola = pixCopiaECola; // usado nos testes
 
-exports.gerarPix = onCall({ maxInstances: 5 }, async request => {
+exports.gerarPix = onCall({ ...OPCOES_PUBLICAS, maxInstances: 5 }, async request => {
   const orderId = String(request.data?.orderId || "");
   if (!/^[A-Za-z0-9]{10,40}$/.test(orderId)) throw new HttpsError("invalid-argument", "Pedido inválido.");
+  await limitarPix(request); // anti-abuso, antes de ler o banco
 
   const db = getFirestore();
   const [orderSnap, pixSnap] = await Promise.all([

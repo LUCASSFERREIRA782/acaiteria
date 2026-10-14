@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#2A0B24">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <!-- Política de segurança: a página só carrega/conversa com estes servidores. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://firebasestorage.googleapis.com; connect-src 'self' https://firestore.googleapis.com https://us-central1-menu-digital-md3.cloudfunctions.net https://viacep.com.br https://brasilapi.com.br; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://www.google.com/recaptcha/; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://firebasestorage.googleapis.com; connect-src 'self' https://content-firebaseappcheck.googleapis.com https://www.google.com/recaptcha/ https://firestore.googleapis.com https://us-central1-menu-digital-md3.cloudfunctions.net https://viacep.com.br https://brasilapi.com.br; frame-src https://www.google.com/recaptcha/ https://recaptcha.google.com/recaptcha/; object-src 'none'; base-uri 'self'; form-action 'self'">
 <!-- Não deixa outro site exibir o cardápio dentro de um iframe (clickjacking). -->
 <script src="js/frame-guard.js"></script>
 
@@ -25,10 +25,6 @@
 
 <!-- Firebase SDKs (compat). integrity = impressão digital do arquivo: se alguém
      alterar o script no servidor, o navegador se recusa a executar. -->
-<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js" integrity="sha384-aUtWR1iCiOCHS8pn1nKNXMZm3I/eDrV63IXWXgE+mHHqJfYTWYV+jGk0sCXz57+U" crossorigin="anonymous"></script>
-<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-compat.js" integrity="sha384-jxdN9nS+cvQavyzo/bNcMoHfxvk0kWtPAfPDRq3EQ/wvbCVLNheaVIphKWMD4/g0" crossorigin="anonymous"></script>
-<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-functions-compat.js" integrity="sha384-c4zDGykM7t9cW/0muJ69shtBRJf2JonnZiwcsZVsrWCCwKwpb2buU+tX/RKzD4+I" crossorigin="anonymous"></script>
-<script src="js/firebase-config.js"></script>
 </head>
 <body>
 
@@ -118,6 +114,12 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+<!-- Firebase no fim da página: o reCAPTCHA do App Check precisa do <body> pronto -->
+<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js" integrity="sha384-aUtWR1iCiOCHS8pn1nKNXMZm3I/eDrV63IXWXgE+mHHqJfYTWYV+jGk0sCXz57+U" crossorigin="anonymous"></script>
+<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-check-compat.js" integrity="sha384-B/AP4FGRp30uqxiGDJ1XO7TvHcPxaZEPR798W+ASc3xztnppTUQe2E0ThTTM2+FH" crossorigin="anonymous"></script>
+<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-compat.js" integrity="sha384-jxdN9nS+cvQavyzo/bNcMoHfxvk0kWtPAfPDRq3EQ/wvbCVLNheaVIphKWMD4/g0" crossorigin="anonymous"></script>
+<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-functions-compat.js" integrity="sha384-c4zDGykM7t9cW/0muJ69shtBRJf2JonnZiwcsZVsrWCCwKwpb2buU+tX/RKzD4+I" crossorigin="anonymous"></script>
+<script src="js/firebase-config.js"></script>
 <script src="js/config.js"></script>
 <script src="data/menu.js"></script>
 <script src="js/utils.js"></script>

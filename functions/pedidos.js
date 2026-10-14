@@ -17,6 +17,8 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { getFirestore, FieldValue } = require("firebase-admin/firestore");
 const crypto = require("crypto");
+const { limitarPedido } = require("./limites");
+const { OPCOES_PUBLICAS } = require("./seguranca");
 
 const PAGAMENTOS = { local: ["caixa_cartao", "caixa_pix"], entrega: ["pix", "maquininha"] };
 const MAX_LINHAS = 10, MAX_QTD = 20;
@@ -55,7 +57,7 @@ function isOpen(loja) {
   return c > o ? min >= o && min < c : min >= o;
 }
 
-exports.criarPedido = onCall({ maxInstances: 10 }, async request => {
+exports.criarPedido = onCall({ ...OPCOES_PUBLICAS, maxInstances: 10 }, async request => {
   const d = request.data || {};
 
   // ---- 1. Dados do cliente ----
@@ -66,6 +68,9 @@ exports.criarPedido = onCall({ maxInstances: 10 }, async request => {
   const mesa = modo === "local" ? text(d.mesa, 10) : "";
   const linhas = Array.isArray(d.itens) ? d.itens : [];
   if (!linhas.length || linhas.length > MAX_LINHAS) fail(`A comanda precisa ter de 1 a ${MAX_LINHAS} itens.`);
+
+  // Anti-abuso: só depois das validações baratas, antes de ler o banco
+  await limitarPedido(request);
 
   const db = getFirestore();
   const ids = [...new Set(linhas.map(l => text(l?.productId, 60)).filter(Boolean))];

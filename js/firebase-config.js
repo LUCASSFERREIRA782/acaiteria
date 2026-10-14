@@ -13,6 +13,18 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 
+// App Check: o navegador prova que as chamadas vêm deste site (reCAPTCHA
+// invisível, sem pedir nada ao cliente). Robôs e scripts de fora não têm
+// essa prova. A chave abaixo é a "chave de site" do reCAPTCHA: pública.
+// Se o reCAPTCHA falhar (rede, bloqueador), o cardápio continua funcionando.
+if (firebase.appCheck) {
+  try {
+    firebase.appCheck().activate(new firebase.appCheck.ReCaptchaEnterpriseProvider("6Ld_BuwtAAAAAC95l-zv794jbdCnji9htJ80y8rc"), true);
+  } catch (err) {
+    console.warn("App Check indisponível:", err && err.message);
+  }
+}
+
 // O site público carrega só o Firestore; o painel carrega também
 // Auth, Storage e Functions. Cada serviço só é criado se o SDK existir.
 const db = firebase.firestore();
