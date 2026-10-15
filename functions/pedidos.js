@@ -24,7 +24,10 @@ const PAGAMENTOS = { local: ["caixa_cartao", "caixa_pix"], entrega: ["pix", "maq
 const MAX_LINHAS = 10, MAX_QTD = 20;
 
 const round2 = n => Math.round(n * 100) / 100;
-const text = (v, max) => String(v ?? "").trim().slice(0, max);
+// Só aceita texto ou número: objeto/array vindo do navegador vira vazio (não "[object Object]")
+const text = (v, max) => (typeof v === "string" || typeof v === "number" ? String(v).trim().slice(0, max) : "");
+// ID de produto: só letras, números, _ e - (barra em ID quebraria o caminho no banco)
+const ID_VALIDO = /^[A-Za-z0-9_-]{1,60}$/;
 const fail = (msg, code = "invalid-argument") => { throw new HttpsError(code, msg); };
 
 function orderCode() {
@@ -74,6 +77,7 @@ exports.criarPedido = onCall({ ...OPCOES_PUBLICAS, maxInstances: 10 }, async req
 
   const db = getFirestore();
   const ids = [...new Set(linhas.map(l => text(l?.productId, 60)).filter(Boolean))];
+  if (ids.some(id => !ID_VALIDO.test(id))) fail("Itens inválidos.");
   if (!ids.length) fail("Itens inválidos.");
 
   const [prodSnaps, addonsDoc, deliveryDoc, lojaDoc, mesasDoc] = await Promise.all([
