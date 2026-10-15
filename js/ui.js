@@ -111,7 +111,12 @@ function openProductBuilder(p) {
 
   openSheet(`
     <div class="sheet-hero${src ? "" : " sheet-hero--empty"}">
-      ${src ? `<img src="${esc(src)}" alt="${esc(p.name)}">` : `<span class="photo-fallback photo-fallback--big" aria-hidden="true"></span>`}
+      ${src
+        ? `<button type="button" class="sheet-hero-zoom" data-zoom-photo aria-label="Ampliar a foto de ${esc(p.name)}">
+             <img src="${esc(src)}" alt="${esc(p.name)}">
+             <span class="zoom-badge" aria-hidden="true">⤢ Ver foto</span>
+           </button>`
+        : `<span class="photo-fallback photo-fallback--big" aria-hidden="true"></span>`}
     </div>
     <div class="sheet-body">
       <h3 class="sheet-title">${esc(p.name)}</h3>
@@ -119,6 +124,7 @@ function openProductBuilder(p) {
       ${builder}
     </div>`, p.name);
 
+  document.querySelector("[data-zoom-photo]")?.addEventListener("click", () => openPhotoViewer(src, p.name));
   if (!p.available) return;
 
   const form = document.getElementById("builder");
@@ -213,4 +219,114 @@ function setupReveal() {
     });
   }, { rootMargin: "0px 0px 80px 0px" });
   els.forEach(el => io.observe(el));
+}
+
+/* ---------------- Foto em tela cheia (com zoom) ----------------
+ * Toque/clique na foto do produto abre em tela cheia.
+ * Celular: pinça para aproximar, arrasta para mover, toque duplo alterna o zoom.
+ * Computador: clique alterna o zoom (no ponto clicado), arrastar move, roda do mouse aproxima.
+ * Fecha no ✕, no Esc ou tocando fora da foto.
+ */
+function openPhotoViewer(src, name) {
+  const safe = safeUrl(src);
+  if (!safe) return;
+  const back = document.activeElement;
+  const viewer = document.createElement("div");
+  viewer.className = "photo-viewer";
+  viewer.setAttribute("role", "dialog");
+  viewer.setAttribute("aria-modal", "true");
+  viewer.setAttribute("aria-label", `Foto: ${name}`);
+  viewer.innerHTML = `
+    <img class="photo-viewer-img" src="${esc(safe)}" alt="${esc(name)}" draggable="false">
+    <button type="button" class="photo-viewer-close" aria-label="Fechar foto">✕</button>
+    <p class="photo-viewer-hint">${matchMedia("(hover: hover)").matches ? "Clique para aproximar · arraste para mover" : "Pince para aproximar · toque duplo"}</p>`;
+  document.body.appendChild(viewer);
+  const img = viewer.querySelector("img");
+  const closeBtn = viewer.querySelector(".photo-viewer-close");
+
+  let scale = 1, x = 0, y = 0;
+  const pointers = new Map();
+  let pinchStart = null, panStart = null, moved = false, lastTap = 0;
+
+  const clampPan = () => {
+    const r = img.getBoundingClientRect();
+    const w = (r.width / scale) * (scale - 1) / 2, h = (r.height / scale) * (scale - 1) / 2;
+    x = Math.max(-w, Math.min(w, x)); y = Math.max(-h, Math.min(h, y));
+  };
+  const apply = (animate = false) => {
+    if (scale <= 1.01) { scale = 1; x = 0; y = 0; }
+    clampPan();
+    img.style.transition = animate ? "transform .22s ease" : "none";
+    img.style.transform = `translate(${x}px, ${y}px) scale(${scale})`;
+    viewer.classList.toggle("is-zoomed", scale > 1);
+  };
+  const zoomAt = (clientX, clientY, target) => {
+    const r = img.getBoundingClientRect();
+    const cx = clientX - (r.left + r.width / 2), cy = clientY - (r.top + r.height / 2);
+    const k = target / scale;
+    x = (x - cx) * k + cx; y = (y - cy) * k + cy;
+    scale = target;
+    apply(true);
+  };
+
+  img.addEventListener("pointerdown", e => {
+    try { img.setPointerCapture(e.pointerId); } catch { /* alguns navegadores recusam: segue sem captura */ }
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    moved = false;
+    if (pointers.size === 2) {
+      const [a, b] = [...pointers.values()];
+      pinchStart = { d: Math.hypot(a.x - b.x, a.y - b.y), scale };
+    } else {
+      panStart = { px: e.clientX, py: e.clientY, x, y };
+    }
+  });
+  img.addEventListener("pointermove", e => {
+    if (!pointers.has(e.pointerId)) return;
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pointers.size === 2 && pinchStart) {
+      const [a, b] = [...pointers.values()];
+      scale = Math.max(1, Math.min(4, pinchStart.scale * Math.hypot(a.x - b.x, a.y - b.y) / pinchStart.d));
+      moved = true;
+      apply();
+    } else if (panStart && scale > 1) {
+      const dx = e.clientX - panStart.px, dy = e.clientY - panStart.py;
+      if (Math.abs(dx) + Math.abs(dy) > 4) moved = true;
+      x = panStart.x + dx; y = panStart.y + dy;
+      apply();
+    }
+  });
+  const end = e => {
+    pointers.delete(e.pointerId);
+    if (pointers.size < 2) pinchStart = null;
+    if (pointers.size === 1) { const [p] = pointers.values(); panStart = { px: p.x, py: p.y, x, y }; }
+    if (pointers.size === 0) panStart = null;
+  };
+  img.addEventListener("pointerup", e => {
+    end(e);
+    if (moved) return;
+    const now = Date.now();
+    const isTouch = e.pointerType !== "mouse";
+    if (!isTouch || now - lastTap < 300) zoomAt(e.clientX, e.clientY, scale > 1 ? 1 : 2.5);
+    lastTap = now;
+  });
+  img.addEventListener("pointercancel", end);
+  img.addEventListener("wheel", e => {
+    e.preventDefault();
+    zoomAt(e.clientX, e.clientY, Math.max(1, Math.min(4, scale * (e.deltaY < 0 ? 1.2 : 1 / 1.2))));
+  }, { passive: false });
+
+  const close = () => {
+    document.removeEventListener("keydown", onKey, true);
+    viewer.remove();
+    back?.focus?.({ preventScroll: true });
+  };
+  const onKey = e => {
+    if (e.key === "Escape") { e.stopPropagation(); close(); }
+    if (e.key === "Tab") { e.preventDefault(); closeBtn.focus(); } // foco fica dentro da foto
+  };
+  document.addEventListener("keydown", onKey, true);
+  closeBtn.addEventListener("click", close);
+  viewer.addEventListener("click", e => { if (e.target === viewer) close(); });
+  requestAnimationFrame(() => viewer.classList.add("is-open"));
+  closeBtn.focus();
 }
