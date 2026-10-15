@@ -238,6 +238,9 @@
       <input class="f-input" id="store-slogan" maxlength="80">
       <label class="f-label" for="store-address">Endereço</label>
       <input class="f-input" id="store-address" maxlength="120">
+      <label class="f-label" for="store-meta">Meta de preparo (minutos)</label>
+      <input class="f-input f-input--sm" id="store-meta" type="number" min="5" max="180" step="1">
+      <p class="a-hint">Pedido em andamento que passar da meta fica em destaque no quadro; a meta também aparece no gráfico de tempos.</p>
       <div class="a-form-actions">
         <button type="submit" class="a-btn a-btn--ink">Salvar dados</button>
       </div>
@@ -256,34 +259,50 @@
 
   <!-- ABA: RELATÓRIOS E DADOS -->
   <div class="a-pane" id="tab-relatorios">
+    <div class="a-print-head" aria-hidden="true">
+      <strong>Relatório de gestão</strong>
+      <span id="report-print-store"></span>
+      <span>Período: <span id="report-print-period"></span> · gerado em <span id="report-print-date"></span></span>
+    </div>
     <div class="a-toolbar">
-      <h2>Desempenho</h2>
+      <h2>Painel de gestão</h2>
       <div class="a-toolbar-right">
-        <div class="a-segmented a-segmented--sm" role="radiogroup" aria-label="Agrupar por">
-          <label><input type="radio" name="reportGroup" value="dia" checked><span>Por dia</span></label>
-          <label><input type="radio" name="reportGroup" value="semana"><span>Por dia da semana</span></label>
-        </div>
         <select class="f-input f-input--sm" id="report-range" aria-label="Período">
           <option value="7">Últimos 7 dias</option>
           <option value="30" selected>Últimos 30 dias</option>
           <option value="90">Últimos 90 dias</option>
         </select>
+        <button type="button" class="a-btn a-btn--sm" id="report-csv-btn">Exportar planilha (CSV)</button>
+        <button type="button" class="a-btn a-btn--ink a-btn--sm" id="report-print-btn">Imprimir / salvar PDF</button>
       </div>
     </div>
     <div class="a-kpis" id="report-kpis"></div>
-    <div class="a-insights" id="report-insights"></div>
     <div class="a-charts">
-      <figure class="a-chart a-card" id="chart-revenue"></figure>
-      <figure class="a-chart a-card" id="chart-orders"></figure>
+      <figure class="a-chart a-card a-chart--wide" id="chart-sales"></figure>
+      <figure class="a-chart a-card" id="chart-times"></figure>
+      <figure class="a-chart a-card" id="chart-donut"></figure>
     </div>
-    <details class="a-card a-report-table">
-      <summary>Ver tabela</summary>
+    <div class="a-donut-switch">
+      <label class="a-inline-label">Mais vendidos por
+        <select class="f-input f-input--sm" id="donut-toggle"><option value="q">quantidade</option><option value="f">faturamento</option></select>
+      </label>
+    </div>
+
+    <section class="a-card a-stock" aria-labelledby="stock-title">
+      <h3 id="stock-title">Estoque</h3>
+      <div class="a-stock-kpis" id="stock-kpis"></div>
+      <div class="a-stock-grid" id="stock-grid"></div>
+      <p class="a-hint">Cor mais forte = estoque mais perto de acabar. "+10" repõe na hora (e volta a vender se estava esgotado).</p>
+    </section>
+
+    <details class="a-card a-report-table" open>
+      <summary>Tabela por dia</summary>
       <div id="report-table"></div>
     </details>
-    <p class="a-hint">Faturamento = soma dos pedidos não cancelados (inclui taxa de entrega). Não é lucro: os custos dos produtos não são registrados no sistema.</p>
+    <p class="a-hint">Faturamento = soma dos pedidos finalizados (inclui taxa de entrega). Tempo de preparo e de entrega aparecem para os pedidos feitos a partir desta versão do painel. Não é lucro: os custos dos produtos não são registrados no sistema.</p>
 
-    <div class="a-toolbar"><h2>Dados e privacidade</h2></div>
-    <div class="a-card a-card--narrow">
+    <div class="a-toolbar a-no-print"><h2>Dados e privacidade</h2></div>
+    <div class="a-card a-card--narrow a-no-print">
       <p>Os pedidos guardam só apelido, mesa ou bairro, itens e valores. Endereço e telefone nunca chegam ao banco.</p>
       <div class="a-privacy-summary" id="privacy-summary">Carregando…</div>
 
@@ -353,6 +372,18 @@
     <span class="f-label">Tamanhos <small>(opcional; se preencher, substituem o preço acima)</small></span>
     <div id="sizes-list"></div>
     <button type="button" class="a-btn a-btn--sm" id="add-size-btn">+ Tamanho</button>
+
+    <div class="a-grid-2">
+      <div>
+        <label class="f-label" for="product-stock">Estoque <small>(vazio = sem controle)</small></label>
+        <input class="f-input" id="product-stock" type="number" min="0" step="1" placeholder="sem controle">
+      </div>
+      <div>
+        <label class="f-label" for="product-stock-min">Avisar quando chegar a</label>
+        <input class="f-input" id="product-stock-min" type="number" min="0" step="1" placeholder="ex.: 5">
+      </div>
+    </div>
+    <p class="a-hint">O estoque baixa a cada pedido (no servidor, sem vender além do que tem); zerou, o produto fica "Esgotado" sozinho. Cancelar o pedido devolve ao estoque.</p>
 
     <div class="a-checks">
       <label class="a-switch"><input type="checkbox" id="product-addons"><span>Aceita adicionais</span></label>

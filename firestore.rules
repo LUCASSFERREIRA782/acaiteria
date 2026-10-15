@@ -29,6 +29,10 @@ service cloud.firestore {
     match /relatorios/{dia} {
       allow read, write: if isAdmin();
     }
+    // Resumo diário do painel de gestão (modos, mais vendidos, tempos): só admin
+    match /resumos/{dia} {
+      allow read, write: if isAdmin();
+    }
 
     // ---- Pedidos ----
     match /pedidos/{orderId} {

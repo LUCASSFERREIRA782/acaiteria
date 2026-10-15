@@ -64,6 +64,9 @@ async function loadMenuAdmin() {
 
 function productRowAdminHTML(p) {
   const src = safeUrl(p.image);
+  const estoque = p.estoque == null ? "" : Number(p.estoque) <= 0
+    ? `<span class="o-tag o-tag--off">Estoque zerado</span>`
+    : `<span class="o-tag${Number(p.estoque) <= Number(p.estoqueMin || 0) ? " o-tag--warn" : ""}">Estoque ${Number(p.estoque)}</span>`;
   const price = p.sizes?.length
     ? p.sizes.map(s => `${esc(s.label)} ${money(s.price)}`).join(" · ")
     : money(p.price);
@@ -76,12 +79,14 @@ function productRowAdminHTML(p) {
         <span class="a-prod-flags">
           ${p.featured ? `<span class="o-tag">Destaque</span>` : ""}
           ${p.addons ? `<span class="o-tag">Adicionais</span>` : ""}
+          ${estoque}
         </span>
       </div>
       <label class="a-switch a-switch--compact" title="Disponível">
         <input type="checkbox" data-toggle-available ${p.available ? "checked" : ""}><span>${p.available ? "Disponível" : "Esgotado"}</span>
       </label>
       <div class="a-prod-actions">
+        ${p.estoque != null ? `<button type="button" class="a-btn a-btn--xs" data-action="restock" title="Repor 10 unidades">+10</button>` : ""}
         <button type="button" class="a-btn a-btn--xs" data-action="edit">Editar</button>
         <button type="button" class="a-btn a-btn--ghost a-btn--xs" data-action="delete">Excluir</button>
       </div>
@@ -104,6 +109,7 @@ async function onProductsListClick(e) {
   }
   const action = e.target.closest("[data-action]")?.dataset.action;
   if (action === "edit") openProductModal(id);
+  if (action === "restock") reporEstoque(id, 10);
   if (action === "delete") deleteProduct(id);
 }
 
@@ -146,6 +152,8 @@ function openProductModal(id = null) {
   (p?.sizes || []).forEach(s => addSizeRow(s.label, s.price));
   editingImageUrl = safeUrl(p?.image);
   setPreview(editingImageUrl);
+  document.getElementById("product-stock").value = p?.estoque ?? "";
+  document.getElementById("product-stock-min").value = p?.estoqueMin ?? "";
 
   document.getElementById("product-modal").showModal();
 }
@@ -207,14 +215,21 @@ async function saveProduct(e) {
   if (!name) { errorEl.textContent = "Dê um nome ao produto."; return; }
   if (Number.isNaN(price)) { errorEl.textContent = "Informe o preço ou ao menos um tamanho."; return; }
 
+  // Estoque opcional: vazio = sem controle; o servidor baixa a cada pedido e esgota ao zerar
+  const lerInteiro = id => { const v = document.getElementById(id).value.trim(); return v === "" ? null : Math.max(0, parseInt(v, 10) || 0); };
+  const estoque = lerInteiro("product-stock");
+  const estoqueMin = estoque == null ? null : lerInteiro("product-stock-min") ?? 0;
+
   const data = {
     name,
+    estoque,
+    estoqueMin,
     description: document.getElementById("product-description").value.trim(),
     price,
     sizes,
     categoriaSlug: document.getElementById("product-category").value,
     addons: document.getElementById("product-addons").checked,
-    available: document.getElementById("product-available").checked,
+    available: document.getElementById("product-available").checked && estoque !== 0,
     featured: document.getElementById("product-featured").checked,
     atualizadoEm: ts(),
   };
@@ -303,5 +318,16 @@ async function deleteCategory() {
   if (!confirm(`Excluir a categoria "${c.nome}"?`)) return;
   await db.collection("categorias").doc(id).delete();
   document.getElementById("category-modal").close();
+  loadMenuAdmin();
+}
+
+/** Reposição rápida (+10): volta a vender se estava esgotado. */
+async function reporEstoque(id, qtd) {
+  const p = productsCache.find(x => x.id === id);
+  if (!p || p.estoque == null) return;
+  await db.collection("produtos").doc(id).update({
+    estoque: firebase.firestore.FieldValue.increment(qtd), available: true, atualizadoEm: ts(),
+  });
+  showToast(`${p.name}: +${qtd} no estoque`);
   loadMenuAdmin();
 }

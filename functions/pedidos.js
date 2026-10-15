@@ -136,7 +136,7 @@ exports.criarPedido = onCall({ ...OPCOES_PUBLICAS, maxInstances: 10 }, async req
 
     const unit = round2(base + escolhidos.reduce((s, a) => s + Number(a.price || 0), 0));
     if (!(unit >= 0 && unit <= 10000)) fail("Preço inválido no cardápio.", "failed-precondition");
-    return { nome: text(p.name, 80), tamanho, adicionais: escolhidos.map(a => a.name), obs: text(l.obs, 120), qtd, unit };
+    return { id: text(l.productId, 60), nome: text(p.name, 80), tamanho, adicionais: escolhidos.map(a => a.name), obs: text(l.obs, 120), qtd, unit };
   });
 
   // ---- 3. Taxa de entrega sempre da configuração do painel ----
@@ -172,7 +172,33 @@ exports.criarPedido = onCall({ ...OPCOES_PUBLICAS, maxInstances: 10 }, async req
   };
   if (atendente?.nome) order.atendente = text(atendente.nome, 30);
 
-  const ref = await db.collection("pedidos").add(order);
+  // ---- 5. Estoque (só produtos com estoque cadastrado no painel) ----
+  // Baixa e pedido na MESMA transação: dois clientes não levam a última
+  // unidade ao mesmo tempo. Zerou = esgotado no cardápio na hora.
+  const qtdPorProduto = new Map();
+  itens.forEach(i => qtdPorProduto.set(i.id, (qtdPorProduto.get(i.id) || 0) + i.qtd));
+  const comEstoque = [...qtdPorProduto.keys()].filter(id => produtos.get(id)?.estoque != null);
+  const ref = db.collection("pedidos").doc();
+  if (!comEstoque.length) {
+    await ref.set(order); // caminho de sempre: nenhum produto do pedido controla estoque
+  } else {
+    await db.runTransaction(async t => {
+      const refs = comEstoque.map(id => db.collection("produtos").doc(id));
+      const snaps = await t.getAll(...refs);
+      snaps.forEach((snap, k) => {
+        const p = snap.data() || {};
+        const pedido = qtdPorProduto.get(comEstoque[k]);
+        const atual = Number(p.estoque);
+        if (p.estoque == null) return; // deixou de controlar no meio do caminho
+        if (atual < pedido) {
+          fail(atual > 0 ? `Só restam ${atual} de ${p.name}. Ajuste a quantidade.` : `${p.name} acabou de esgotar.`, "failed-precondition");
+        }
+        const estoque = atual - pedido;
+        t.update(refs[k], estoque === 0 ? { estoque, available: false } : { estoque });
+      });
+      t.set(ref, order);
+    });
+  }
   return {
     id: ref.id, codigo, itens, subtotal, taxaEntrega, total, bairro,
     atendente: atendente ? { nome: atendente.nome, numero: atendente.numero } : null,

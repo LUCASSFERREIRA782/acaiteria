@@ -25,6 +25,10 @@
   --folha:      #3D6B47;   /* sucesso, aberto, pago */
   --coco:       #FBF6EC;   /* texto sobre fundos escuros */
 
+  /* Nomes usados pelo topo 3D (mesmo motor do cardápio de amostra) */
+  --accent: var(--banana);
+  --on-ink: var(--coco);
+
   /* ---- Tipografia ---- */
   --font-display: "Bagel Fat One", "Arial Black", system-ui, sans-serif;
   --font-body:    "Familjen Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;

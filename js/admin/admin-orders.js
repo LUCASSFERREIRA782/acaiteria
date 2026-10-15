@@ -148,8 +148,11 @@ function orderCardHTML(o) {
   const next = NEXT_STATUS[o.modo]?.[o.status];
   const finished = o.status === "concluido" || o.status === "cancelado";
 
+  const meta = Number(storeCache?.metaPreparo) || 20;
+  const atrasado = date && ["novo", "preparo"].includes(o.status) && (Date.now() - date.getTime()) / 60000 > meta;
   return `
-    <article class="o-card o-card--${esc(o.status)}" data-order-id="${esc(o.id)}">
+    <article class="o-card o-card--${esc(o.status)}${atrasado ? " o-card--atrasado" : ""}" data-order-id="${esc(o.id)}">
+      ${atrasado ? `<p class="o-late">Passou da meta de ${meta} min</p>` : ""}
       <header class="o-head">
         <span class="o-code">#${esc(o.codigo || o.id.slice(-4))}</span>
         <span class="o-time">${minutesAgo(date)}</span>
@@ -184,10 +187,10 @@ async function onBoardClick(e) {
     if (e.target.matches("[data-paid]")) {
       await ref.update({ pago: e.target.checked, atualizadoEm: ts() });
     } else if (e.target.closest("[data-next]")) {
-      await ref.update({ status: e.target.closest("[data-next]").dataset.next, atualizadoEm: ts() });
+      await avancarPedido(order, ref, e.target.closest("[data-next]").dataset.next);
     } else if (e.target.closest("[data-cancel]")) {
       if (!confirm(`Cancelar o pedido #${order?.codigo || ""}?`)) return;
-      await ref.update({ status: "cancelado", atualizadoEm: ts() });
+      await cancelarPedido(order, ref);
     }
   } catch (err) {
     alert("Não foi possível atualizar: " + err.message);
@@ -219,4 +222,72 @@ function notifyNewOrder(n) {
     osc.start(t + i * 0.16);
     osc.stop(t + i * 0.16 + 0.16);
   });
+}
+
+/* ---------- Avanço do pedido ----------
+ * Cada etapa grava o horário (preparoEm, prontoEm, saiuEm, concluidoEm):
+ * é o que alimenta o gráfico de tempos. Ao finalizar, o pedido soma no
+ * resumo do dia na MESMA gravação (o painel de gestão lê um documento por
+ * dia, não milhares de pedidos).
+ */
+const diaChave = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+async function avancarPedido(o, ref, next) {
+  const marca = { status: next, [`${next}Em`]: ts(), atualizadoEm: ts() };
+  if (next !== "concluido") return ref.update(marca);
+  const b = db.batch();
+  b.update(ref, marca);
+  const { dia, dados } = incrementosDoResumo(o, Date.now());
+  b.set(db.collection("resumos").doc(dia), dados, { merge: true });
+  return b.commit();
+}
+
+/** Cancelar devolve ao estoque o que o servidor tinha baixado no pedido. */
+async function cancelarPedido(o, ref) {
+  const inc = firebase.firestore.FieldValue.increment;
+  const porProduto = new Map();
+  (o.itens || []).forEach(i => { if (i.id) porProduto.set(i.id, (porProduto.get(i.id) || 0) + Number(i.qtd || 0)); });
+  await db.runTransaction(async t => {
+    const refs = [...porProduto.keys()].map(id => db.collection("produtos").doc(id));
+    const snaps = await Promise.all(refs.map(r => t.get(r)));
+    snaps.forEach((snap, k) => {
+      if (snap.data()?.estoque == null) return; // produto sem controle de estoque
+      t.update(refs[k], { estoque: inc(porProduto.get(refs[k].id)), available: true });
+    });
+    t.update(ref, { status: "cancelado", canceladoEm: ts(), atualizadoEm: ts() });
+  });
+}
+
+/** Tempos do pedido, em minutos: preparo (até pronto/saiu) e entrega (até o cliente). */
+function temposDoPedido(o) {
+  const ms = v => v?.toMillis?.() ?? null;
+  const criado = ms(o.criadoEm), pronto = ms(o.prontoEm) ?? ms(o.saiuEm), fim = ms(o.concluidoEm);
+  return {
+    preparo: criado && pronto ? Math.round((pronto - criado) / 60_000) : null,
+    entrega: pronto && fim ? Math.round((fim - pronto) / 60_000) : null,
+  };
+}
+
+function incrementosDoResumo(o, fimMs) {
+  const inc = firebase.firestore.FieldValue.increment;
+  const dia = diaChave(new Date(o.criadoEm?.toMillis?.() ?? fimMs));
+  const total = Number(o.total || 0);
+  const itens = {};
+  (o.itens || []).forEach(i => {
+    const it = itens[i.nome] ||= { q: 0, f: 0 };
+    it.q += Number(i.qtd || 0); it.f = Math.round((it.f + Number(i.unit || 0) * Number(i.qtd || 0)) * 100) / 100;
+  });
+  const t = temposDoPedido({ ...o, concluidoEm: firebase.firestore.Timestamp.fromMillis(fimMs) });
+  const tempos = {};
+  if (t.preparo != null) tempos.preparo = { s: inc(t.preparo), n: inc(1) };
+  if (t.entrega != null) tempos.entrega = { s: inc(t.entrega), n: inc(1) };
+  return {
+    dia,
+    dados: {
+      dia, pedidos: inc(1), faturamento: inc(total),
+      modos: { [o.modo]: { p: inc(1), f: inc(total) } },
+      itens: Object.fromEntries(Object.entries(itens).map(([nome, v]) => [nome, { q: inc(v.q), f: inc(v.f) }])),
+      tempos,
+    },
+  };
 }
