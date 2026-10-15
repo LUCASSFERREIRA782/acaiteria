@@ -276,3 +276,19 @@ textarea.f-input { resize: vertical; }
   .a-hour-closed { grid-column: 2 / -1; }
   .a-whats-grid { grid-template-columns: 1fr 1fr 70px 36px; }
 }
+
+/* ---------- Mesas e QR Code ---------- */
+.a-tables-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: var(--s-3); padding: 0 var(--s-4) var(--s-6); }
+.a-table-card { margin: 0; background: var(--white); border: var(--line); border-radius: var(--r-md); padding: var(--s-3); text-align: center; break-inside: avoid; }
+.a-table-qr svg { width: 100%; height: auto; display: block; }
+.a-table-card figcaption { display: flex; flex-direction: column; gap: 2px; margin-top: var(--s-2); }
+.a-table-card strong { font-family: var(--font-display); font-weight: 400; font-size: var(--fs-xl); line-height: 1; }
+.a-table-card span { font-size: var(--fs-xs); color: var(--ink-soft); }
+.a-table-url { font-family: var(--font-mono); font-size: 9px !important; word-break: break-all; }
+.a-table-link { font-size: var(--fs-xs); }
+@media print {
+  body:has(#tab-mesas.is-active) :is(.a-header, .a-toolbar, .toast, .a-pane:not(#tab-mesas)) { display: none !important; }
+  body:has(#tab-mesas.is-active) #tab-mesas { padding: 0; }
+  .a-tables-grid { grid-template-columns: repeat(3, 1fr); padding: 0; }
+  .a-table-link { display: none; }
+}

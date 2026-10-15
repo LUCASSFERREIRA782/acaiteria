@@ -8,11 +8,12 @@ service cloud.firestore {
     }
 
     // ---- Cardápio e configurações: leitura pública, escrita só admin ----
-    // config/pix (chave e recebedor) e config/equipe (todos os WhatsApp
-    // da equipe) são privados: só o admin lê. O site usa config/loja,
-    // que tem apenas os números marcados para receber pedidos.
+    // config/pix (chave e recebedor), config/equipe (todos os WhatsApp
+    // da equipe) e config/mesasPrivado (códigos dos QR Codes das mesas)
+    // são privados: só o admin lê. O site usa config/loja, que tem apenas
+    // os números marcados para receber pedidos, e config/mesas (quantidade).
     match /config/{docId} {
-      allow read: if !(docId in ['pix', 'equipe']) || isAdmin();
+      allow read: if !(docId in ['pix', 'equipe', 'mesasPrivado']) || isAdmin();
       allow write: if isAdmin();
     }
     match /categorias/{catId} {

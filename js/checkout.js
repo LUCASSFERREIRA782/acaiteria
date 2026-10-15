@@ -31,11 +31,34 @@ const PAYMENT_LABELS = {
   caixa_cartao: "Cartão no caixa", caixa_pix: "Pix (QR Code da mesa/balcão)",
 };
 
+/**
+ * Mesa do QR Code impresso: ?mesa=7&c=<código da mesa> (painel → Mesas e QR).
+ * O servidor confere o código; sem ele, a mesa não vale quando a loja usa QR por mesa.
+ */
+const QR_MESA = (() => {
+  const q = new URLSearchParams(location.search);
+  const m = q.get("mesa") || "", c = q.get("c") || "";
+  const ok = /^\d{1,3}$/.test(m) && Number(m) >= 1 && /^[A-Za-z0-9]{6,12}$/.test(c);
+  return { mesa: ok ? String(Number(m)) : "", codigo: ok ? c : "" };
+})();
+
+/** Campo da mesa: travado quando veio do QR; escondido se a loja só aceita mesa pelo QR. */
+function campoMesa() {
+  if (QR_MESA.mesa) {
+    return `<div class="field-group field-group--narrow"><span class="legend">Mesa</span><span class="locked-field" title="Mesa do QR Code">${esc(QR_MESA.mesa)}</span></div>`;
+  }
+  if (catalog.mesas?.porQr) return ""; // mesa só pelo QR Code da mesa (evita pedido "da mesa" feito de fora)
+  return `<label class="field-group field-group--narrow">
+           <span class="legend">Mesa</span>
+           <input class="field" name="mesa" maxlength="10" inputmode="numeric" autocomplete="off" placeholder="Opcional" value="${esc(checkout.mesa)}">
+         </label>`;
+}
+
 const checkout = {
   modo: "local",
   pagamento: "caixa_cartao",
   apelido: "",
-  mesa: "",
+  mesa: QR_MESA.mesa,
   bairro: "",
   endereco: { cep: "", rua: "", numero: "", complemento: "", referencia: "", cidade: "" }, // só em memória
   cepStatus: "",      // mensagem abaixo do campo CEP
@@ -143,10 +166,7 @@ function renderOrderBody() {
            <span class="legend">Como te chamamos? <span class="req">obrigatório</span></span>
            <input class="field" name="apelido" maxlength="30" autocomplete="off" placeholder="Primeiro nome ou apelido" value="${esc(checkout.apelido)}" required>
          </label>
-         <label class="field-group field-group--narrow">
-           <span class="legend">Mesa</span>
-           <input class="field" name="mesa" maxlength="10" inputmode="numeric" autocomplete="off" placeholder="Opcional" value="${esc(checkout.mesa)}">
-         </label>
+         ${campoMesa()}
        </div>`
     : `<label class="field-group">
          <span class="legend">Como te chamamos? <span class="req">obrigatório</span></span>
@@ -253,7 +273,7 @@ function attachOrderEvents(body) {
   // Campos de texto: só atualiza o estado (sem re-render, para não perder o foco)
   form.addEventListener("input", e => {
     const { name, value } = e.target;
-    if (name === "apelido" || name === "mesa") checkout[name] = value;
+    if (name === "apelido" || (name === "mesa" && !QR_MESA.mesa)) checkout[name] = value;
     if (name === "cep") {
       const digits = value.replace(/\D/g, "").slice(0, 8);
       e.target.value = digits.length > 5 ? `${digits.slice(0, 5)}-${digits.slice(5)}` : digits;
@@ -303,7 +323,8 @@ async function submitOrder() {
     modo: checkout.modo,
     pagamento: checkout.pagamento,
     apelido: checkout.apelido.trim().slice(0, 30),
-    mesa: checkout.modo === "local" ? checkout.mesa.trim().slice(0, 10) : "",
+    mesa: checkout.modo === "local" ? (QR_MESA.mesa || checkout.mesa.trim().slice(0, 10)) : "",
+    mesaCodigo: checkout.modo === "local" && QR_MESA.mesa ? QR_MESA.codigo : "",
     bairro: checkout.modo === "entrega" ? (checkout.bairro || "").slice(0, 40) : "",
     itens: cart.items.map(i => ({
       productId: i.productId,
@@ -319,7 +340,7 @@ async function submitOrder() {
     const order = { ...request, ...data, codigo: data.codigo };
     const whatsText = order.modo === "entrega" ? buildWhatsMessage(order) : "";
     wipeAddress();       // endereço já foi copiado para a mensagem; some da memória
-    checkout.mesa = "";
+    checkout.mesa = QR_MESA.mesa;
     clearCart();
     startTracking({ id: data.id, code: data.codigo, modo: order.modo, pagamento: order.pagamento, total: data.total, whatsText,
       whatsNumber: data.atendente?.numero || restaurantConfig.whatsapp });

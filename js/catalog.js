@@ -19,13 +19,16 @@ async function loadCatalog() {
   try {
     if (typeof db === "undefined") throw new Error("Firebase indisponível");
 
-    const [catsSnap, prodSnap, addonsDoc, deliveryDoc, lojaDoc] = await Promise.all([
+    const [catsSnap, prodSnap, addonsDoc, deliveryDoc, lojaDoc, mesasDoc] = await Promise.all([
       db.collection("categorias").orderBy("ordem").get(),
       db.collection("produtos").orderBy("ordem").get(),
       db.collection("config").doc("adicionais").get(),
       db.collection("config").doc("deliveryFees").get(),
       db.collection("config").doc("loja").get(),
+      db.collection("config").doc("mesas").get(),
     ]);
+    // Mesas: quantidade e se a loja usa QR Code por mesa (painel → Mesas e QR)
+    catalog.mesas = mesasDoc.exists ? { quantidade: Number(mesasDoc.data().quantidade) || 0, porQr: Boolean(mesasDoc.data().porQr) } : { quantidade: 0, porQr: false };
     if (lojaDoc.exists) applyStoreConfig(lojaDoc.data());
     if (catsSnap.empty) throw new Error("Cardápio vazio no Firestore");
 

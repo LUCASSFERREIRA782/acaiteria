@@ -15,3 +15,6 @@ functions/.env
 # Fora deste repositório
 Digital-Menu/
 _legado/
+
+# Registros dos emuladores (podem ter caminhos do computador)
+*-debug.log

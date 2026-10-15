@@ -568,3 +568,6 @@ textarea.pix-code { width: 100%; resize: none; color: var(--ink); }
   position: absolute; bottom: calc(var(--s-4) + env(safe-area-inset-bottom)); left: 0; right: 0; margin: 0;
   text-align: center; color: var(--coco); font-size: var(--fs-sm); opacity: .75; pointer-events: none;
 }
+
+/* Mesa vinda do QR Code: aparece travada na comanda */
+.locked-field { padding: 11px 12px; background: var(--paper-deep); border: var(--line); border-radius: var(--r-sm); font-weight: 700; }

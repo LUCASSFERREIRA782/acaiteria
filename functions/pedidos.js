@@ -65,7 +65,7 @@ exports.criarPedido = onCall({ ...OPCOES_PUBLICAS, maxInstances: 10 }, async req
   const pagamento = PAGAMENTOS[modo].includes(d.pagamento) ? d.pagamento : fail("Forma de pagamento inválida para essa modalidade.");
   const apelido = text(d.apelido, 30);
   if (apelido.length < 2) fail("Diga como podemos te chamar.");
-  const mesa = modo === "local" ? text(d.mesa, 10) : "";
+  const mesaPedida = modo === "local" ? text(d.mesa, 10) : "";
   const linhas = Array.isArray(d.itens) ? d.itens : [];
   if (!linhas.length || linhas.length > MAX_LINHAS) fail(`A comanda precisa ter de 1 a ${MAX_LINHAS} itens.`);
 
@@ -76,13 +76,36 @@ exports.criarPedido = onCall({ ...OPCOES_PUBLICAS, maxInstances: 10 }, async req
   const ids = [...new Set(linhas.map(l => text(l?.productId, 60)).filter(Boolean))];
   if (!ids.length) fail("Itens inválidos.");
 
-  const [prodSnaps, addonsDoc, deliveryDoc, lojaDoc] = await Promise.all([
+  const [prodSnaps, addonsDoc, deliveryDoc, lojaDoc, mesasDoc] = await Promise.all([
     db.getAll(...ids.map(id => db.collection("produtos").doc(id))),
     db.collection("config").doc("adicionais").get(),
     db.collection("config").doc("deliveryFees").get(),
     db.collection("config").doc("loja").get(),
+    db.collection("config").doc("mesasPrivado").get(),
   ]);
   const loja = lojaDoc.exists ? lojaDoc.data() : {};
+
+  // ---- Mesa ----
+  // Com QR por mesa ativo (painel → Mesas e QR), a mesa só vale com o código
+  // impresso daquela mesa: ninguém pede "da mesa 5" de fora da loja, nem com
+  // mesa que não existe. Sem QR por mesa ainda: comportamento antigo (digitada),
+  // limitada à quantidade de mesas se ela estiver cadastrada.
+  const mesasCfg = mesasDoc.exists ? mesasDoc.data() : {};
+  const codigos = mesasCfg.codigos && typeof mesasCfg.codigos === "object" ? mesasCfg.codigos : null;
+  let mesa = "";
+  if (mesaPedida) {
+    if (codigos && Object.keys(codigos).length) {
+      const n = /^\d{1,3}$/.test(mesaPedida) ? String(Number(mesaPedida)) : "";
+      if (!n || !codigos[n] || codigos[n] !== text(d.mesaCodigo, 16)) {
+        fail("Este QR Code de mesa não vale mais. Chame um atendente ou peça sem mesa.", "failed-precondition");
+      }
+      mesa = n;
+    } else {
+      const qtd = Number(mesasCfg.quantidade) || 0;
+      if (qtd && /^\d+$/.test(mesaPedida) && Number(mesaPedida) > qtd) fail(`Mesa ${mesaPedida} não existe. Confira o número na mesa.`);
+      mesa = mesaPedida;
+    }
+  }
   if (!isOpen(loja)) fail("A loja está fechada agora.", "failed-precondition");
 
   const produtos = new Map(prodSnaps.filter(s => s.exists).map(s => [s.id, s.data()]));

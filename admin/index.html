@@ -45,6 +45,7 @@
       <button class="a-tab" data-tab="cardapio" role="tab">Cardápio</button>
       <button class="a-tab" data-tab="adicionais" role="tab">Adicionais</button>
       <button class="a-tab" data-tab="entrega" role="tab">Entrega</button>
+      <button class="a-tab" data-tab="mesas" role="tab">Mesas e QR</button>
       <button class="a-tab" data-tab="loja" role="tab">Loja e equipe</button>
       <button class="a-tab" data-tab="relatorios" role="tab">Relatórios e dados</button>
     </nav>
@@ -163,6 +164,26 @@
         <button type="submit" class="a-btn a-btn--ink">Salvar Pix</button>
       </div>
     </form>
+  </div>
+
+  <!-- ABA: MESAS E QR -->
+  <div class="a-pane" id="tab-mesas">
+    <div class="a-toolbar">
+      <h2>Mesas e QR Code</h2>
+      <span class="a-store-status" id="tables-status"></span>
+      <div class="a-toolbar-right">
+        <form id="tables-form" class="a-inline-form">
+          <label class="a-inline-label" for="tables-count">Quantidade de mesas</label>
+          <input class="f-input f-input--sm" id="tables-count" type="number" min="1" max="80" step="1">
+          <button type="submit" class="a-btn a-btn--ink a-btn--sm">Salvar</button>
+        </form>
+        <button type="button" class="a-btn a-btn--banana a-btn--sm" id="tables-toggle-btn">Ativar QR por mesa</button>
+        <button type="button" class="a-btn a-btn--sm" id="print-tables-btn" hidden>Imprimir</button>
+        <button type="button" class="a-btn a-btn--ghost a-btn--sm" id="tables-new-codes-btn" hidden title="Use se algum QR foi copiado ou trocado">Gerar novos códigos</button>
+      </div>
+      <p class="a-hint">Com o QR por mesa ativo, cada QR abre o cardápio com a mesa e um código só dela: o pedido chega com "Mesa N" e ninguém pede "da mesa" de fora da loja. Imprima com o endereço em texto embaixo (o cliente confere) e use adesivo que rasga ao ser removido.</p>
+    </div>
+    <div class="a-tables-grid" id="tables-grid"></div>
   </div>
 
   <!-- ABA: LOJA E EQUIPE -->
@@ -385,6 +406,8 @@
 <script src="../js/admin/admin-delivery.js"></script>
 <script src="../js/admin/admin-users.js"></script>
 <script src="../js/admin/admin-store.js"></script>
+<script src="../js/qr.js"></script>
+<script src="../js/admin/admin-mesas.js"></script>
 <script src="../js/admin/admin-reports.js"></script>
 </body>
 </html>
